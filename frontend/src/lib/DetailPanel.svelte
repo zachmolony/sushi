@@ -188,7 +188,7 @@
     <!-- Collections -->
     <div class="flex flex-col gap-1.5">
       <span class="text-[0.65rem] uppercase tracking-wider opacity-40"
-        >Collections</span
+        >Trays</span
       >
       <div class="flex flex-wrap gap-1 items-center">
         {#each $selectedAssetCollections as col}

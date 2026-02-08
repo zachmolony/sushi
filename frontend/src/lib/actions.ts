@@ -481,14 +481,14 @@ export async function bulkAddToCollection(collectionId: number) {
     await BulkAddToCollection(collectionId, [...ids]);
     const c = await GetCollections();
     collections.set(c || []);
-    showToast(`Added ${ids.size} assets to collection`);
+    showToast(`Added ${ids.size} assets to tray`);
     const sa = get(selectedAsset);
     if (sa && ids.has(sa.id)) {
       const cols = await GetCollectionsForAsset(sa.id);
       selectedAssetCollections.set(cols || []);
     }
   } catch (e) {
-    showToast("Failed to add to collection");
+    showToast("Failed to add to tray");
   }
 }
 
@@ -577,9 +577,9 @@ export async function hoverAddToCollection(
     await AddToCollection(collectionId, assetId);
     const c = await GetCollections();
     collections.set(c || []);
-    showToast("Added to collection");
+    showToast("Added to tray");
   } catch (e) {
-    showToast("Already in collection");
+    showToast("Already in tray");
   }
 }
 
@@ -720,7 +720,7 @@ export async function toggleFavorite(assetId: number) {
   }
 }
 
-// --- Collections ---
+// --- Trays ---
 
 export const SHELF_ICONS = [
   "📁",
@@ -761,9 +761,9 @@ export async function createCollection(name: string, icon: string) {
     await CreateCollection(name.trim(), icon);
     const c = await GetCollections();
     collections.set(c || []);
-    showToast("Collection created");
+    showToast("Tray created");
   } catch (e) {
-    showToast("Failed to create collection");
+    showToast("Failed to create tray");
   }
 }
 
@@ -776,9 +776,9 @@ export async function deleteCollectionById(id: number) {
     }
     const c = await GetCollections();
     collections.set(c || []);
-    showToast("Collection deleted");
+    showToast("Tray deleted");
   } catch (e) {
-    showToast("Failed to delete collection");
+    showToast("Failed to delete tray");
   }
 }
 
@@ -793,9 +793,9 @@ export async function addSelectedToCollection(collectionId: number) {
     ]);
     selectedAssetCollections.set(cols || []);
     collections.set(allCols || []);
-    showToast("Added to collection");
+    showToast("Added to tray");
   } catch (e) {
-    showToast("Failed to add to collection");
+    showToast("Failed to add to tray");
   }
 }
 
@@ -813,9 +813,9 @@ export async function removeSelectedFromCollection(collectionId: number) {
     if (get(activeCollectionId) === collectionId) {
       applyFilter();
     }
-    showToast("Removed from collection");
+    showToast("Removed from tray");
   } catch (e) {
-    showToast("Failed to remove from collection");
+    showToast("Failed to remove from tray");
   }
 }
 
@@ -839,7 +839,7 @@ export function viewLabel(): string {
 
   if (colId !== null) {
     const col = cols.find((c) => c.id === colId);
-    label = col ? `${col.icon} ${col.name}` : "Collection";
+    label = col ? `${col.icon} ${col.name}` : "Tray";
   } else if (fTags.length > 0) {
     label = fTags.map((t) => `#${t}`).join(" + ");
   } else if (fTag) {

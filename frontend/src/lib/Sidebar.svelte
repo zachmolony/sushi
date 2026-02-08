@@ -254,12 +254,12 @@
     </div>
   {/if}
 
-  <!-- Collections -->
+  <!-- Trays -->
   <div class="flex flex-col gap-2">
     <h3
       class="m-0 text-[0.7rem] uppercase tracking-wider opacity-50 font-semibold"
     >
-      Collections
+      Trays
     </h3>
     <div class="flex flex-col gap-0.5">
       {#each $collections as col}
@@ -283,7 +283,7 @@
           <button
             class="bg-transparent border-none text-white/20 hover:text-red-400 cursor-pointer text-[0.55rem] p-0 px-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
             on:click|stopPropagation={() => deleteCollectionById(col.id)}
-            title="Delete collection">✕</button
+            title="Delete tray">✕</button
           >
         </div>
       {/each}
@@ -303,7 +303,7 @@
           <input
             type="text"
             class="w-full bg-transparent border-b border-white/10 text-white text-[0.7rem] py-0.5 outline-none font-inherit placeholder:text-white/25 focus:border-b-accent/50"
-            placeholder="collection name…"
+            placeholder="tray name…"
             bind:value={newCollectionName}
             on:keydown={handleNewCollectionKeydown}
           />
@@ -321,7 +321,7 @@
       {:else}
         <button
           class="w-full text-center px-2 py-1.5 rounded-md text-xs bg-accent-glow border border-accent-border/75 text-white cursor-pointer font-inherit hover:bg-accent-dim transition-colors"
-          on:click={() => (showNewCollection = true)}>+ New Collection</button
+          on:click={() => (showNewCollection = true)}>+ New Tray</button
         >
       {/if}
     </div>

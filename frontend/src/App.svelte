@@ -94,7 +94,7 @@
         />
         <div class="flex items-center gap-1">
           <select
-            class="bg-surface border border-surface-border rounded text-white/70 text-[0.72rem] px-2 py-1 outline-none font-inherit cursor-pointer"
+            class="appearance-none bg-surface border border-surface-border rounded text-white/70 text-[0.72rem] px-2 py-1 outline-none font-inherit cursor-pointer"
             value={$sortField}
             on:change={handleSortChange}
           >
@@ -105,7 +105,7 @@
             <option value="poly-count">Polys</option>
           </select>
           <button
-            class="bg-surface border border-surface-border rounded text-white/60 text-sm px-1.5 py-0.5 cursor-pointer font-inherit hover:bg-surface-hover transition-colors leading-none"
+            class="rounded text-white/60 text-sm px-1.5 py-1 cursor-pointer font-inherit hover:bg-surface-hover transition-colors leading-none"
             on:click={() => setSort($sortField)}
             title="Toggle sort direction"
             >{$sortDirection === "asc" ? "↑" : "↓"}</button
@@ -119,7 +119,7 @@
         <button
           class="text-[0.68rem] px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-white/40 hover:text-white/70 hover:bg-white/10 cursor-pointer font-inherit transition-colors whitespace-nowrap"
           on:click={selectAllVisible}
-          title="Select all visible assets (for bulk tagging / collections)"
+          title="Select all visible assets (for bulk tagging / trays)"
           >☑ Select all</button
         >
       </div>

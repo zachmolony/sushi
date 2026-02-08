@@ -101,10 +101,10 @@
       {/if}
     </div>
 
-    <!-- Collection picker -->
+    <!-- Tray picker -->
     {#if $collections.length > 0}
       <select
-        class="bg-surface border border-surface-border rounded text-white/70 text-xs px-2 py-1 outline-none font-inherit cursor-pointer"
+        class="appearance-none bg-surface border border-surface-border rounded text-white/70 text-xs px-2 outline-none font-inherit cursor-pointer"
         on:change={(e) => {
           const target = e.currentTarget;
           const val = parseInt(target.value);
@@ -123,7 +123,7 @@
       <button
         class="px-2.5 py-1 rounded-md text-xs bg-surface border border-surface-border text-white cursor-pointer font-inherit hover:bg-surface-hover transition-colors whitespace-nowrap"
         on:click={() => (showNewCollection = true)}
-        title="Create new collection">+ New Tray</button
+        title="Create new tray">+ New Tray</button
       >
     {/if}
 
@@ -190,7 +190,7 @@
     </div>
   {/if}
 
-  <!-- New collection inline form -->
+  <!-- New tray inline form -->
   {#if showNewCollection}
     <div class="flex items-center gap-2 flex-wrap">
       <div class="flex gap-0.5">
@@ -207,7 +207,7 @@
       <input
         type="text"
         class="w-28 bg-surface border border-surface-border rounded text-white text-xs px-2 py-1 outline-none font-inherit placeholder:text-white/30 focus:border-accent/50"
-        placeholder="collection name…"
+        placeholder="tray name…"
         bind:value={newCollectionName}
         on:keydown={(e) => {
           if (e.key === "Enter") doCreateCollection();
