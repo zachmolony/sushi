@@ -6,6 +6,7 @@
     collections,
     thumbnailCache,
     blenderConnected,
+    tagsWithCounts,
   } from "./stores";
   import {
     sendToBlender,
@@ -15,16 +16,37 @@
     removeTag,
     addSelectedToCollection,
     removeSelectedFromCollection,
+    toggleFavorite,
     formatSize,
+    SUGGESTED_TAGS,
   } from "./actions";
 
   let newTagInput = "";
+  let showTagSuggestions = false;
+
+  // Suggestions: existing tags not already on the asset, then prebuilt
+  $: assetTagNames = $selectedAssetTags.map((t) => t.name);
+  $: existingNotApplied = $tagsWithCounts.filter((t) => !assetTagNames.includes(t.name)).map((t) => t.name).slice(0, 6);
+  $: prebuiltNotApplied = SUGGESTED_TAGS.filter((t) => !assetTagNames.includes(t) && !existingNotApplied.includes(t));
+  $: tagSuggestions = [...existingNotApplied, ...prebuiltNotApplied.slice(0, Math.max(0, 8 - existingNotApplied.length))];
+  $: filteredTagSuggestions = newTagInput.trim()
+    ? tagSuggestions.filter((t) => t.includes(newTagInput.trim().toLowerCase()))
+    : tagSuggestions;
 
   function handleTagKeydown(e: KeyboardEvent) {
     if (e.key === "Enter") {
       addTag(newTagInput);
       newTagInput = "";
     }
+    if (e.key === "Escape") {
+      showTagSuggestions = false;
+    }
+  }
+
+  function applyTagSuggestion(tag: string) {
+    addTag(tag);
+    newTagInput = "";
+    showTagSuggestions = false;
   }
 </script>
 
@@ -44,7 +66,17 @@
       {/if}
     </div>
 
-    <h3>{$selectedAsset.filename}</h3>
+    <div class="detail-title-row">
+      <h3>{$selectedAsset.filename}</h3>
+      <button
+        class="fav-btn"
+        class:is-fav={$selectedAsset.favorited === 1}
+        on:click={() => toggleFavorite($selectedAsset.id)}
+        title={$selectedAsset.favorited === 1 ? "Remove from favorites" : "Add to favorites"}
+      >
+        {$selectedAsset.favorited === 1 ? "★" : "☆"}
+      </button>
+    </div>
 
     <div class="detail-meta">
       <div class="meta-row">
@@ -77,9 +109,17 @@
             placeholder="add tag…"
             bind:value={newTagInput}
             on:keydown={handleTagKeydown}
+            on:focus={() => (showTagSuggestions = true)}
           />
         </div>
       </div>
+      {#if showTagSuggestions && filteredTagSuggestions.length > 0}
+        <div class="tag-suggestions">
+          {#each filteredTagSuggestions as tag}
+            <button class="suggestion-chip" on:click={() => applyTagSuggestion(tag)}>{tag}</button>
+          {/each}
+        </div>
+      {/if}
     </div>
 
     <div class="detail-collections">
@@ -153,6 +193,25 @@
     font-size: 1rem;
     word-break: break-all;
   }
+  .detail-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .detail-title-row h3 { flex: 1; }
+  .fav-btn {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .fav-btn:hover { color: rgba(255, 200, 50, 0.8); transform: scale(1.15); }
+  .fav-btn.is-fav { color: rgba(255, 200, 50, 0.9); }
   .detail-meta {
     display: flex;
     flex-direction: column;
@@ -240,6 +299,30 @@
   }
   .tag-input::placeholder { color: rgba(255, 255, 255, 0.25); }
   .tag-input:focus { border-bottom-color: rgba(80, 160, 255, 0.5); }
+
+  .tag-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
+  .suggestion-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 99px;
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .suggestion-chip:hover {
+    background: rgba(80, 160, 255, 0.18);
+    border-color: rgba(80, 160, 255, 0.3);
+    color: rgba(180, 220, 255, 0.85);
+  }
 
   .collection-select {
     background: rgba(255, 255, 255, 0.06);

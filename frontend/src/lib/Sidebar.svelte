@@ -5,6 +5,7 @@
     filterTag,
     filterTags,
     activeCollectionId,
+    activeView,
     collections,
     assets,
   } from "./stores";
@@ -14,14 +15,25 @@
     toggleTagFilter,
     clearTagFilters,
     setCollectionFilter,
+    setActiveView,
     createCollection,
+    deleteCollectionById,
     SHELF_ICONS,
   } from "./actions";
   import { blenderConnected } from "./stores";
+  import type { ViewId } from "./stores";
 
   let showNewCollection = false;
   let newCollectionName = "";
   let newCollectionIcon = "📁";
+
+  const views: { id: ViewId; label: string; icon: string }[] = [
+    { id: "all", label: "All Assets", icon: "📦" },
+    { id: "untagged", label: "Untagged", icon: "🏷️" },
+    { id: "recent-added", label: "Recently Added", icon: "🆕" },
+    { id: "recent-used", label: "Recently Used", icon: "🕐" },
+    { id: "favorites", label: "Favorites", icon: "⭐" },
+  ];
 
   function handleNewCollectionKeydown(e: KeyboardEvent) {
     if (e.key === "Enter") doCreateCollection();
@@ -44,6 +56,22 @@
     <span class="status-text">
       {$blenderConnected ? "Blender connected" : "Blender not found"}
     </span>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>Views</h3>
+    <div class="view-list">
+      {#each views as view}
+        <button
+          class="view-item"
+          class:active={$activeView === view.id && $activeCollectionId === null && $filterTags.length === 0 && !$filterTag}
+          on:click={() => setActiveView(view.id)}
+        >
+          <span class="view-icon">{view.icon}</span>
+          <span class="view-name">{view.label}</span>
+        </button>
+      {/each}
+    </div>
   </div>
 
   <div class="sidebar-section">
@@ -98,6 +126,7 @@
           <span class="collection-icon">{col.icon}</span>
           <span class="collection-name">{col.name}</span>
           <span class="collection-count">{col.asset_count}</span>
+          <button class="collection-delete" on:click|stopPropagation={() => deleteCollectionById(col.id)} title="Delete collection">✕</button>
         </button>
       {/each}
       {#if showNewCollection}
@@ -287,6 +316,52 @@
     white-space: nowrap;
   }
   .collection-count { font-size: 0.65rem; opacity: 0.35; flex-shrink: 0; }
+  .collection-delete {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    font-size: 0.55rem;
+    padding: 0 0.15rem;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .collection-item:hover .collection-delete { opacity: 1; }
+  .collection-delete:hover { color: rgba(255, 100, 100, 0.9); }
+
+  .view-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .view-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.78rem;
+    transition: background 0.15s;
+    text-align: left;
+  }
+  .view-item:hover { background: rgba(255, 255, 255, 0.07); }
+  .view-item.active {
+    background: rgba(80, 160, 255, 0.15);
+    border-color: rgba(80, 160, 255, 0.3);
+  }
+  .view-icon { font-size: 0.85rem; flex-shrink: 0; }
+  .view-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   .new-collection-form {
     display: flex;

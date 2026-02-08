@@ -51,6 +51,7 @@
           {/if}
         </div>
         <div class="asset-name" title={asset.absolute_path}>
+          {#if asset.favorited === 1}<span class="fav-star">★</span>{/if}
           {asset.filename}
         </div>
       </button>
@@ -128,6 +129,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .fav-star {
+    color: rgba(255, 200, 50, 0.8);
+    font-size: 0.65rem;
+    margin-right: 0.15rem;
   }
 
   .hover-actions {

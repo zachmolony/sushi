@@ -16,6 +16,8 @@
     tagsWithCounts,
     showBulkActions,
     selectedAssetIds,
+    sortField,
+    sortDirection,
   } from "./lib/stores";
   import {
     loadData,
@@ -25,7 +27,14 @@
     clearTagFilters,
     viewLabel,
     clearSelection,
+    setSort,
   } from "./lib/actions";
+  import type { SortField } from "./lib/stores";
+
+  function handleSortChange(e: Event) {
+    const val = (e.currentTarget as HTMLSelectElement).value;
+    setSort(val as SortField);
+  }
 
   let blenderInterval: ReturnType<typeof setInterval>;
 
@@ -75,6 +84,21 @@
           placeholder="Search files…"
           bind:value={$searchQuery}
         />
+        <div class="sort-controls">
+          <select
+            class="sort-select"
+            value={$sortField}
+            on:change={handleSortChange}
+          >
+            <option value="name">Name</option>
+            <option value="date-added">Date Added</option>
+            <option value="file-modified">Modified</option>
+            <option value="file-size">Size</option>
+          </select>
+          <button class="sort-dir-btn" on:click={() => setSort($sortField)} title="Toggle sort direction">
+            {$sortDirection === "asc" ? "↑" : "↓"}
+          </button>
+        </div>
         <span class="result-count">
           {$filteredAssets.length} result{$filteredAssets.length !== 1 ? "s" : ""}
         </span>
@@ -98,11 +122,11 @@
         </div>
       {/if}
 
+      <AssetGrid />
+
       {#if $showBulkActions && $selectedAssetIds.size > 0}
         <BulkBar />
       {/if}
-
-      <AssetGrid />
     {/if}
   </main>
 
@@ -166,6 +190,37 @@
     opacity: 0.35;
     white-space: nowrap;
   }
+
+  .sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .sort-select {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.72rem;
+    padding: 0.25rem 0.4rem;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .sort-select option { background: #1a1a2e; color: white; }
+  .sort-dir-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+    padding: 0.15rem 0.35rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    line-height: 1;
+  }
+  .sort-dir-btn:hover { background: rgba(255, 255, 255, 0.12); }
 
   .tag-bar {
     display: flex;

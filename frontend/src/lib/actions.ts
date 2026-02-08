@@ -545,6 +545,12 @@ export const SHELF_ICONS = [
   "🎨", "🏠", "🚗", "🌿", "💀", "🍣",
 ];
 
+export const SUGGESTED_TAGS = [
+  "lowpoly", "psx", "vehicle", "clutter", "environment",
+  "character", "animated", "prop", "weapon", "building",
+  "nature", "furniture", "sci-fi", "fantasy", "modular",
+];
+
 export async function createCollection(name: string, icon: string) {
   if (!name.trim()) return;
   try {
