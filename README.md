@@ -54,9 +54,9 @@
 
 ### 🏷️ Organization
 
-- **Tags** — Create and assign tags to any asset. Bulk-tag hundreds of assets at once
+- **Tags** — Create and assign tags to any asset. Bulk-tag hundreds of assets at once. Tags are stackable — add `lowpoly`, `prop`, `interior` to the same asset and filter by any combination
 - **Smart tag filtering** — Click to include (blue), right-click to exclude (red). Combine filters freely
-- **Trays** — Group assets into named trays with custom icons
+- **Trays** — Playlists for 3D assets. Curate named sets like "🎮 PSX Horror Kit" or "🏠 Archviz Kitchen" — drag in assets from anywhere in your library regardless of folder or tags
 - **Search** — Instant filename search across your entire library
 
 ### ⚡ Workflow
@@ -76,7 +76,7 @@
 
 ### 🖥️ Native Desktop App
 
-- Built with [Wails](https://wails.io) — native Go backend, no Electron bloat
+- Built with [Wails](https://wails.io) — native Go backend
 - Tiny binary (~15 MB), instant startup
 - SQLite database — everything stored locally, no cloud, no accounts
 - Linux-first (macOS and Windows support via Wails)
