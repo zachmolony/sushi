@@ -20,12 +20,6 @@
 
 ---
 
-<!--
-  📸 SCREENSHOTS — Replace these placeholders with actual screenshots!
-  Take screenshots of the app and save them to .github/screenshots/
-  Then uncomment the images below.
--->
-
 ## Screenshots
 
 <p align="center">
@@ -42,6 +36,11 @@
   <img src=".github/screenshots/bulk-actions.png" width="800" alt="Bulk actions" />
 </p>
 <p align="center"><em>Select multiple assets for bulk tagging, collections, and export</em></p>
+
+<p align="center">
+  <video src="https://github.com/zachmolony/sushi/raw/main/.github/screenshots/blender-bridge.webm" width="800" controls></video>
+</p>
+<p align="center"><em>One-click send to Blender via the included addon</em></p>
 
 ## Features
 
