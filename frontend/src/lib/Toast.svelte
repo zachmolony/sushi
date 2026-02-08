@@ -3,24 +3,12 @@
 </script>
 
 {#if $toastVisible}
-  <div class="toast">{$toastMessage}</div>
+  <div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-accent/90 text-gray-900 px-5 py-2 rounded-lg text-sm font-semibold z-[100] animate-[toast-in_0.2s_ease]">
+    {$toastMessage}
+  </div>
 {/if}
 
 <style>
-  .toast {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(100, 180, 255, 0.9);
-    color: #111;
-    padding: 0.5rem 1.25rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    z-index: 100;
-    animation: toast-in 0.2s ease;
-  }
   @keyframes toast-in {
     from { opacity: 0; transform: translateX(-50%) translateY(10px); }
     to { opacity: 1; transform: translateX(-50%) translateY(0); }

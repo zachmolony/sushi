@@ -48,389 +48,155 @@
   }
 </script>
 
-<aside class="sidebar">
-  <h2>sushi 🍣</h2>
+<aside class="w-[220px] min-w-[220px] bg-base-800 p-5 flex flex-col gap-5 border-r border-white/[0.06] overflow-y-auto">
+  <h2 class="m-0 text-xl tracking-wide">sushi 🍣</h2>
 
-  <div class="blender-status">
-    <div class="status-dot" class:connected={$blenderConnected}></div>
-    <span class="status-text">
+  <!-- Blender status -->
+  <div class="flex items-center gap-2">
+    <div class="w-2 h-2 rounded-full shrink-0 {$blenderConnected ? 'bg-green-400' : 'bg-red-400'}"></div>
+    <span class="text-xs opacity-60">
       {$blenderConnected ? "Blender connected" : "Blender not found"}
     </span>
   </div>
 
-  <div class="sidebar-section">
-    <h3>Views</h3>
-    <div class="view-list">
+  <!-- Views -->
+  <div class="flex flex-col gap-2">
+    <h3 class="m-0 text-[0.7rem] uppercase tracking-wider opacity-50 font-semibold">Views</h3>
+    <div class="flex flex-col gap-0.5">
       {#each views as view}
         <button
-          class="view-item"
-          class:active={$activeView === view.id && $activeCollectionId === null && $filterTags.length === 0 && !$filterTag}
+          class="flex items-center gap-2 px-2 py-1.5 rounded text-[0.78rem] cursor-pointer font-inherit text-left border transition-colors
+            {$activeView === view.id && $activeCollectionId === null && $filterTags.length === 0 && !$filterTag
+              ? 'bg-accent-glow border-accent-border text-white'
+              : 'bg-surface-dim border-transparent text-inherit hover:bg-white/[0.07]'}"
           on:click={() => setActiveView(view.id)}
         >
-          <span class="view-icon">{view.icon}</span>
-          <span class="view-name">{view.label}</span>
+          <span class="text-[0.85rem] shrink-0">{view.icon}</span>
+          <span class="flex-1 truncate">{view.label}</span>
         </button>
       {/each}
     </div>
   </div>
 
-  <div class="sidebar-section">
-    <h3>Watch Folders</h3>
-    <button class="btn btn-sm btn-add" on:click={addFolder}>+ Add Folder</button>
+  <!-- Watch Folders -->
+  <div class="flex flex-col gap-2">
+    <h3 class="m-0 text-[0.7rem] uppercase tracking-wider opacity-50 font-semibold">Watch Folders</h3>
+    <button
+      class="w-full text-center px-2 py-1.5 rounded-md text-xs bg-accent-glow border border-accent-border/75 text-white cursor-pointer font-inherit hover:bg-accent-dim transition-colors"
+      on:click={addFolder}
+    >+ Add Folder</button>
     {#if $watchFolders.length > 0}
-      <div class="folder-list">
+      <div class="flex flex-col gap-0.5">
         {#each $watchFolders as folder}
-          <div class="folder-item">
-            <span class="folder-path" title={folder.path}>
+          <div class="flex items-center justify-between gap-1 px-2 py-1 bg-white/[0.04] rounded text-xs group">
+            <span class="truncate flex-1 opacity-70" title={folder.path}>
               {folder.path.split("/").pop()}
             </span>
             <button
-              class="folder-remove"
+              class="bg-transparent border-none text-white/30 hover:text-red-400 cursor-pointer text-[0.65rem] p-0 px-0.5 shrink-0"
               on:click={() => removeFolder(folder.id)}
-              title="Remove this folder">✕</button>
+              title="Remove this folder"
+            >✕</button>
           </div>
         {/each}
       </div>
     {:else}
-      <p class="hint">No folders watched yet.</p>
+      <p class="text-xs opacity-40 leading-relaxed">No folders watched yet.</p>
     {/if}
   </div>
 
+  <!-- Tags -->
   {#if $allTags.length > 0}
-    <div class="sidebar-section">
-      <h3>Tags</h3>
-      <div class="tag-filter-list">
+    <div class="flex flex-col gap-2">
+      <h3 class="m-0 text-[0.7rem] uppercase tracking-wider opacity-50 font-semibold">Tags</h3>
+      <div class="flex flex-wrap gap-1">
         <button
-          class="tag-chip"
-          class:active={$filterTag === "" && $filterTags.length === 0 && $activeCollectionId === null}
-          on:click={() => clearTagFilters()}>All</button>
+          class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] border cursor-pointer font-inherit transition-colors
+            {$filterTag === '' && $filterTags.length === 0 && $activeCollectionId === null
+              ? 'bg-accent-dim border-accent-border text-white'
+              : 'bg-surface border-surface-border text-white hover:bg-surface-hover'}"
+          on:click={() => clearTagFilters()}
+        >All</button>
         {#each $allTags as tag}
           <button
-            class="tag-chip"
-            class:active={$filterTags.includes(tag.name) || $filterTag === tag.name}
-            on:click={() => toggleTagFilter(tag.name)}>{tag.name}</button>
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] border cursor-pointer font-inherit transition-colors
+              {$filterTags.includes(tag.name) || $filterTag === tag.name
+                ? 'bg-accent-dim border-accent-border text-white'
+                : 'bg-surface border-surface-border text-white hover:bg-surface-hover'}"
+            on:click={() => toggleTagFilter(tag.name)}
+          >{tag.name}</button>
         {/each}
       </div>
     </div>
   {/if}
 
-  <div class="sidebar-section">
-    <h3>Collections</h3>
-    <div class="collection-list">
+  <!-- Collections -->
+  <div class="flex flex-col gap-2">
+    <h3 class="m-0 text-[0.7rem] uppercase tracking-wider opacity-50 font-semibold">Collections</h3>
+    <div class="flex flex-col gap-0.5">
       {#each $collections as col}
-        <button
-          class="collection-item"
-          class:active={$activeCollectionId === col.id}
+        <div
+          class="flex items-center gap-1.5 px-2 py-1.5 rounded text-[0.78rem] cursor-pointer font-inherit text-left border transition-colors group
+            {$activeCollectionId === col.id
+              ? 'bg-accent-glow border-accent-border text-white'
+              : 'bg-surface-dim border-transparent text-inherit hover:bg-white/[0.07]'}"
           on:click={() => setCollectionFilter(col.id)}
+          on:keydown={(e) => { if (e.key === 'Enter') setCollectionFilter(col.id); }}
+          role="button"
+          tabindex="0"
         >
-          <span class="collection-icon">{col.icon}</span>
-          <span class="collection-name">{col.name}</span>
-          <span class="collection-count">{col.asset_count}</span>
-          <button class="collection-delete" on:click|stopPropagation={() => deleteCollectionById(col.id)} title="Delete collection">✕</button>
-        </button>
+          <span class="text-[0.9rem] shrink-0">{col.icon}</span>
+          <span class="flex-1 truncate">{col.name}</span>
+          <span class="text-[0.65rem] opacity-35 shrink-0">{col.asset_count}</span>
+          <button
+            class="bg-transparent border-none text-white/20 hover:text-red-400 cursor-pointer text-[0.55rem] p-0 px-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            on:click|stopPropagation={() => deleteCollectionById(col.id)}
+            title="Delete collection"
+          >✕</button>
+        </div>
       {/each}
       {#if showNewCollection}
-        <div class="new-collection-form">
-          <div class="icon-picker">
+        <div class="flex flex-col gap-1.5 p-2 bg-white/[0.04] rounded-md mt-1">
+          <div class="flex flex-wrap gap-0.5">
             {#each SHELF_ICONS as icon}
               <button
-                class="icon-option"
-                class:active={newCollectionIcon === icon}
-                on:click={() => (newCollectionIcon = icon)}>{icon}</button>
+                class="w-[26px] h-[26px] flex items-center justify-center rounded cursor-pointer text-sm transition-colors border
+                  {newCollectionIcon === icon
+                    ? 'bg-accent-dim border-accent-border'
+                    : 'bg-white/[0.04] border-transparent hover:bg-white/10'}"
+                on:click={() => (newCollectionIcon = icon)}
+              >{icon}</button>
             {/each}
           </div>
           <input
             type="text"
-            class="tag-input"
+            class="w-full bg-transparent border-b border-white/10 text-white text-[0.7rem] py-0.5 outline-none font-inherit placeholder:text-white/25 focus:border-b-accent/50"
             placeholder="collection name…"
             bind:value={newCollectionName}
             on:keydown={handleNewCollectionKeydown}
           />
-          <div class="new-collection-actions">
-            <button class="btn btn-sm btn-primary" on:click={doCreateCollection}>Create</button>
-            <button class="btn btn-sm btn-muted" on:click={() => (showNewCollection = false)}>Cancel</button>
+          <div class="flex gap-1">
+            <button
+              class="px-2 py-1 rounded-md text-xs bg-accent-dim border border-accent-border text-white cursor-pointer font-inherit hover:bg-accent-hover transition-colors"
+              on:click={doCreateCollection}
+            >Create</button>
+            <button
+              class="px-2 py-1 rounded-md text-xs bg-surface border border-surface-border text-white opacity-60 cursor-pointer font-inherit hover:bg-surface-hover transition-colors"
+              on:click={() => (showNewCollection = false)}
+            >Cancel</button>
           </div>
         </div>
       {:else}
-        <button class="btn btn-sm btn-add" on:click={() => (showNewCollection = true)}>+ New Collection</button>
+        <button
+          class="w-full text-center px-2 py-1.5 rounded-md text-xs bg-accent-glow border border-accent-border/75 text-white cursor-pointer font-inherit hover:bg-accent-dim transition-colors"
+          on:click={() => (showNewCollection = true)}
+        >+ New Collection</button>
       {/if}
     </div>
   </div>
 
-  <div class="sidebar-spacer"></div>
-  <div class="sidebar-footer">
-    <span class="hint">{$assets.length} asset{$assets.length !== 1 ? "s" : ""}</span>
+  <div class="flex-1"></div>
+  <div class="pt-2 border-t border-white/[0.06]">
+    <span class="text-xs opacity-40">{$assets.length} asset{$assets.length !== 1 ? "s" : ""}</span>
   </div>
 </aside>
-
-<style>
-  .sidebar {
-    width: 220px;
-    min-width: 220px;
-    background: rgba(20, 28, 40, 1);
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    overflow-y: auto;
-  }
-  .sidebar h2 {
-    margin: 0;
-    font-size: 1.3rem;
-    letter-spacing: 0.05em;
-  }
-  .sidebar-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .sidebar-section h3 {
-    margin: 0;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.5;
-  }
-  .sidebar-spacer { flex: 1; }
-  .sidebar-footer {
-    padding-top: 0.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .blender-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255, 80, 80, 0.8);
-    flex-shrink: 0;
-  }
-  .status-dot.connected {
-    background: rgba(80, 220, 120, 0.9);
-  }
-  .status-text {
-    font-size: 0.75rem;
-    opacity: 0.6;
-  }
-
-  .btn-add {
-    width: 100%;
-    text-align: center;
-    background: rgba(80, 160, 255, 0.15);
-    border-color: rgba(80, 160, 255, 0.3);
-  }
-  .btn-add:hover { background: rgba(80, 160, 255, 0.25); }
-  .folder-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .folder-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.25rem;
-    padding: 0.3rem 0.5rem;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 4px;
-    font-size: 0.75rem;
-  }
-  .folder-path {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    opacity: 0.7;
-  }
-  .folder-remove {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    font-size: 0.65rem;
-    padding: 0 0.2rem;
-    flex-shrink: 0;
-  }
-  .folder-remove:hover { color: rgba(255, 100, 100, 0.9); }
-
-  .tag-filter-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
-  .tag-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 99px;
-    font-size: 0.7rem;
-    color: white;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
-  }
-  .tag-chip:hover { background: rgba(255, 255, 255, 0.14); }
-  .tag-chip.active {
-    background: rgba(80, 160, 255, 0.25);
-    border-color: rgba(80, 160, 255, 0.4);
-  }
-
-  .collection-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-  .collection-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    border-radius: 5px;
-    cursor: pointer;
-    color: inherit;
-    font-family: inherit;
-    font-size: 0.78rem;
-    transition: background 0.15s;
-    text-align: left;
-  }
-  .collection-item:hover { background: rgba(255, 255, 255, 0.07); }
-  .collection-item.active {
-    background: rgba(80, 160, 255, 0.15);
-    border-color: rgba(80, 160, 255, 0.3);
-  }
-  .collection-icon { font-size: 0.9rem; flex-shrink: 0; }
-  .collection-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .collection-count { font-size: 0.65rem; opacity: 0.35; flex-shrink: 0; }
-  .collection-delete {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.2);
-    cursor: pointer;
-    font-size: 0.55rem;
-    padding: 0 0.15rem;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.15s, color 0.15s;
-  }
-  .collection-item:hover .collection-delete { opacity: 1; }
-  .collection-delete:hover { color: rgba(255, 100, 100, 0.9); }
-
-  .view-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-  }
-  .view-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    border-radius: 5px;
-    cursor: pointer;
-    color: inherit;
-    font-family: inherit;
-    font-size: 0.78rem;
-    transition: background 0.15s;
-    text-align: left;
-  }
-  .view-item:hover { background: rgba(255, 255, 255, 0.07); }
-  .view-item.active {
-    background: rgba(80, 160, 255, 0.15);
-    border-color: rgba(80, 160, 255, 0.3);
-  }
-  .view-icon { font-size: 0.85rem; flex-shrink: 0; }
-  .view-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .new-collection-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 6px;
-    margin-top: 0.25rem;
-  }
-  .icon-picker { display: flex; flex-wrap: wrap; gap: 0.15rem; }
-  .icon-option {
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid transparent;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: background 0.15s;
-  }
-  .icon-option:hover { background: rgba(255, 255, 255, 0.1); }
-  .icon-option.active {
-    background: rgba(80, 160, 255, 0.2);
-    border-color: rgba(80, 160, 255, 0.4);
-  }
-  .new-collection-actions { display: flex; gap: 0.3rem; }
-
-  .tag-input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 0.7rem;
-    padding: 0.2rem 0;
-    outline: none;
-    font-family: inherit;
-  }
-  .tag-input::placeholder { color: rgba(255, 255, 255, 0.25); }
-  .tag-input:focus { border-bottom-color: rgba(80, 160, 255, 0.5); }
-
-  .btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 6px;
-    padding: 0.45rem 0.75rem;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-family: inherit;
-    transition: background 0.15s;
-    text-align: left;
-  }
-  .btn:hover { background: rgba(255, 255, 255, 0.14); }
-  .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
-  .btn-muted { opacity: 0.6; }
-  .btn-primary {
-    background: rgba(80, 160, 255, 0.25);
-    border-color: rgba(80, 160, 255, 0.4);
-  }
-  .btn-primary:hover { background: rgba(80, 160, 255, 0.35); }
-
-  .hint {
-    font-size: 0.75rem;
-    opacity: 0.4;
-    line-height: 1.4;
-  }
-</style>

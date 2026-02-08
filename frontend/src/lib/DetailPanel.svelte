@@ -38,9 +38,7 @@
       addTag(newTagInput);
       newTagInput = "";
     }
-    if (e.key === "Escape") {
-      showTagSuggestions = false;
-    }
+    if (e.key === "Escape") showTagSuggestions = false;
   }
 
   function applyTagSuggestion(tag: string) {
@@ -51,61 +49,64 @@
 </script>
 
 {#if $selectedAsset}
-  <aside class="detail-panel">
-    <div class="detail-preview">
+  <aside class="w-[300px] min-w-[300px] bg-base-800 p-5 flex flex-col gap-4 border-l border-white/[0.06] overflow-y-auto">
+    <!-- Preview -->
+    <div class="w-full aspect-square bg-black/30 rounded-lg overflow-hidden flex items-center justify-center">
       {#if $thumbnailCache[$selectedAsset.id]}
         <img
           src={$thumbnailCache[$selectedAsset.id]}
           alt={$selectedAsset.filename}
-          class="detail-thumb-img"
+          class="w-full h-full object-contain"
         />
       {:else}
-        <div class="preview-placeholder">
-          <span class="asset-ext">.glb</span>
-        </div>
+        <span class="text-xl opacity-20 font-bold">.glb</span>
       {/if}
     </div>
 
-    <div class="detail-title-row">
-      <h3>{$selectedAsset.filename}</h3>
+    <!-- Title + fav -->
+    <div class="flex items-start gap-2">
+      <h3 class="m-0 text-base break-all flex-1">{$selectedAsset.filename}</h3>
       <button
-        class="fav-btn"
-        class:is-fav={$selectedAsset.favorited === 1}
+        class="bg-transparent border-none text-xl cursor-pointer p-0 leading-none shrink-0 transition-all hover:scale-110
+          {$selectedAsset.favorited === 1 ? 'text-fav' : 'text-white/30 hover:text-yellow-400/80'}"
         on:click={() => toggleFavorite($selectedAsset.id)}
         title={$selectedAsset.favorited === 1 ? "Remove from favorites" : "Add to favorites"}
-      >
-        {$selectedAsset.favorited === 1 ? "★" : "☆"}
-      </button>
+      >{$selectedAsset.favorited === 1 ? "★" : "☆"}</button>
     </div>
 
-    <div class="detail-meta">
-      <div class="meta-row">
-        <span class="meta-label">Path</span>
-        <code class="meta-value">{$selectedAsset.absolute_path}</code>
+    <!-- Meta -->
+    <div class="flex flex-col gap-1.5">
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Path</span>
+        <code class="text-[0.78rem] break-all leading-relaxed opacity-80">{$selectedAsset.absolute_path}</code>
       </div>
-      <div class="meta-row">
-        <span class="meta-label">Size</span>
-        <span class="meta-value">{formatSize($selectedAsset.file_size)}</span>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Size</span>
+        <span class="text-[0.78rem] opacity-80">{formatSize($selectedAsset.file_size)}</span>
       </div>
-      <div class="meta-row">
-        <span class="meta-label">Modified</span>
-        <span class="meta-value">{new Date($selectedAsset.modified_at).toLocaleDateString()}</span>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Modified</span>
+        <span class="text-[0.78rem] opacity-80">{new Date($selectedAsset.modified_at).toLocaleDateString()}</span>
       </div>
     </div>
 
-    <div class="detail-tags">
-      <span class="meta-label">Tags</span>
-      <div class="tag-list">
+    <!-- Tags -->
+    <div class="flex flex-col gap-1.5">
+      <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Tags</span>
+      <div class="flex flex-wrap gap-1 items-center">
         {#each $selectedAssetTags as tag}
-          <span class="tag-chip tag-removable">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-surface border border-surface-border rounded-full text-[0.7rem] text-white">
             {tag.name}
-            <button class="tag-x" on:click={() => removeTag(tag.id)}>✕</button>
+            <button
+              class="bg-transparent border-none text-white/40 hover:text-red-400 cursor-pointer text-[0.6rem] p-0 leading-none"
+              on:click={() => removeTag(tag.id)}
+            >✕</button>
           </span>
         {/each}
-        <div class="tag-input-wrap">
+        <div class="flex-1 min-w-[60px]">
           <input
             type="text"
-            class="tag-input"
+            class="w-full bg-transparent border-b border-white/10 text-white text-[0.7rem] py-0.5 outline-none font-inherit placeholder:text-white/25 focus:border-b-accent/50"
             placeholder="add tag…"
             bind:value={newTagInput}
             on:keydown={handleTagKeydown}
@@ -114,26 +115,33 @@
         </div>
       </div>
       {#if showTagSuggestions && filteredTagSuggestions.length > 0}
-        <div class="tag-suggestions">
+        <div class="flex flex-wrap gap-1">
           {#each filteredTagSuggestions as tag}
-            <button class="suggestion-chip" on:click={() => applyTagSuggestion(tag)}>{tag}</button>
+            <button
+              class="inline-flex items-center px-1.5 py-0.5 bg-white/5 border border-white/[0.06] rounded-full text-[0.6rem] text-white/40 cursor-pointer font-inherit transition-all hover:bg-accent-dim hover:border-accent-border hover:text-blue-200"
+              on:click={() => applyTagSuggestion(tag)}
+            >{tag}</button>
           {/each}
         </div>
       {/if}
     </div>
 
-    <div class="detail-collections">
-      <span class="meta-label">Collections</span>
-      <div class="collection-chips">
+    <!-- Collections -->
+    <div class="flex flex-col gap-1.5">
+      <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Collections</span>
+      <div class="flex flex-wrap gap-1 items-center">
         {#each $selectedAssetCollections as col}
-          <span class="tag-chip tag-removable">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-surface border border-surface-border rounded-full text-[0.7rem] text-white">
             {col.icon} {col.name}
-            <button class="tag-x" on:click={() => removeSelectedFromCollection(col.id)}>✕</button>
+            <button
+              class="bg-transparent border-none text-white/40 hover:text-red-400 cursor-pointer text-[0.6rem] p-0 leading-none"
+              on:click={() => removeSelectedFromCollection(col.id)}
+            >✕</button>
           </span>
         {/each}
         {#if $collections.filter((c) => !$selectedAssetCollections.find((sc) => sc.id === c.id)).length > 0}
           <select
-            class="collection-select"
+            class="bg-white/[0.06] border border-surface-border rounded-full text-white/50 text-[0.7rem] px-2 py-0.5 outline-none font-inherit cursor-pointer"
             on:change={(e) => {
               const val = parseInt(e.currentTarget.value);
               if (val) addSelectedToCollection(val);
@@ -149,218 +157,22 @@
       </div>
     </div>
 
-    <div class="detail-actions">
+    <!-- Actions -->
+    <div class="flex flex-col gap-1.5 mt-auto">
       <button
-        class="btn btn-primary"
+        class="px-3 py-2 rounded-md text-sm bg-accent-dim border border-accent-border text-white text-left cursor-pointer font-inherit hover:bg-accent-hover transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
         on:click={sendToBlender}
         title={$blenderConnected ? "Import into Blender" : "Blender addon not running"}
-        disabled={!$blenderConnected}>🚀 Send to Blender</button>
-      <button class="btn" on:click={copyPath}>📋 Copy Path</button>
-      <button class="btn btn-muted" on:click={showInFolder}>📂 Show in Folder</button>
+        disabled={!$blenderConnected}
+      >🚀 Send to Blender</button>
+      <button
+        class="px-3 py-2 rounded-md text-sm bg-surface border border-surface-border text-white text-left cursor-pointer font-inherit hover:bg-surface-hover transition-colors"
+        on:click={copyPath}
+      >📋 Copy Path</button>
+      <button
+        class="px-3 py-2 rounded-md text-sm bg-surface border border-surface-border text-white text-left cursor-pointer font-inherit hover:bg-surface-hover transition-colors opacity-60"
+        on:click={showInFolder}
+      >📂 Show in Folder</button>
     </div>
   </aside>
 {/if}
-
-<style>
-  .detail-panel {
-    width: 300px;
-    min-width: 300px;
-    background: rgba(20, 28, 40, 1);
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
-    overflow-y: auto;
-  }
-  .detail-preview {
-    width: 100%;
-    aspect-ratio: 1;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .detail-thumb-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  .detail-panel h3 {
-    margin: 0;
-    font-size: 1rem;
-    word-break: break-all;
-  }
-  .detail-title-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .detail-title-row h3 { flex: 1; }
-  .fav-btn {
-    background: none;
-    border: none;
-    font-size: 1.3rem;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.3);
-    padding: 0;
-    line-height: 1;
-    transition: color 0.15s, transform 0.15s;
-    flex-shrink: 0;
-  }
-  .fav-btn:hover { color: rgba(255, 200, 50, 0.8); transform: scale(1.15); }
-  .fav-btn.is-fav { color: rgba(255, 200, 50, 0.9); }
-  .detail-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .meta-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-  }
-  .meta-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.4;
-  }
-  .meta-value {
-    font-size: 0.78rem;
-    word-break: break-all;
-    line-height: 1.4;
-    opacity: 0.8;
-  }
-  .preview-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.3;
-  }
-  .asset-ext {
-    font-size: 1.2rem;
-    opacity: 0.2;
-    font-weight: 700;
-  }
-
-  .detail-tags, .detail-collections {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .tag-list, .collection-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    align-items: center;
-  }
-  .tag-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 99px;
-    font-size: 0.7rem;
-    color: white;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
-  }
-  .tag-chip:hover { background: rgba(255, 255, 255, 0.14); }
-  .tag-removable { cursor: default; }
-  .tag-x {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
-    font-size: 0.6rem;
-    padding: 0;
-    line-height: 1;
-  }
-  .tag-x:hover { color: rgba(255, 100, 100, 0.9); }
-  .tag-input-wrap { flex: 1; min-width: 60px; }
-  .tag-input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 0.7rem;
-    padding: 0.2rem 0;
-    outline: none;
-    font-family: inherit;
-  }
-  .tag-input::placeholder { color: rgba(255, 255, 255, 0.25); }
-  .tag-input:focus { border-bottom-color: rgba(80, 160, 255, 0.5); }
-
-  .tag-suggestions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-  }
-  .suggestion-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.1rem 0.4rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 99px;
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-  }
-  .suggestion-chip:hover {
-    background: rgba(80, 160, 255, 0.18);
-    border-color: rgba(80, 160, 255, 0.3);
-    color: rgba(180, 220, 255, 0.85);
-  }
-
-  .collection-select {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 99px;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
-    outline: none;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .collection-select option { background: #1a1a2e; color: white; }
-
-  .detail-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin-top: auto;
-  }
-  .btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 6px;
-    padding: 0.45rem 0.75rem;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-family: inherit;
-    transition: background 0.15s;
-    text-align: left;
-  }
-  .btn:hover { background: rgba(255, 255, 255, 0.14); }
-  .btn-muted { opacity: 0.6; }
-  .btn-primary {
-    background: rgba(80, 160, 255, 0.25);
-    border-color: rgba(80, 160, 255, 0.4);
-  }
-  .btn-primary:hover { background: rgba(80, 160, 255, 0.35); }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
-</style>
