@@ -67,7 +67,7 @@ make install   # builds and installs to ~/.local/bin with desktop entry
 
 > Requires [Go](https://go.dev/dl/) 1.24+, [Node.js](https://nodejs.org/) 18+, and the GTK/WebKit dev libraries (`sudo apt install libgtk-3-dev libwebkit2gtk-4.0-dev` on Ubuntu/Debian).
 
-## Blender Addon
+## Blender Addon (Sushi Bridge)
 
 Sushi can send assets directly into Blender with one click. To set it up:
 
