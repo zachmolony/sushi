@@ -1,79 +1,230 @@
 <script lang="ts">
-  import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/main/App.js'
+  import { onMount, onDestroy } from "svelte";
+  import Sidebar from "./lib/Sidebar.svelte";
+  import AssetGrid from "./lib/AssetGrid.svelte";
+  import BulkBar from "./lib/BulkBar.svelte";
+  import DetailPanel from "./lib/DetailPanel.svelte";
+  import Toast from "./lib/Toast.svelte";
+  import {
+    loading,
+    assets,
+    activeCollectionId,
+    filterTag,
+    filterTags,
+    searchQuery,
+    filteredAssets,
+    tagsWithCounts,
+    showBulkActions,
+    selectedAssetIds,
+  } from "./lib/stores";
+  import {
+    loadData,
+    startBlenderPolling,
+    addFolder,
+    toggleTagFilter,
+    clearTagFilters,
+    viewLabel,
+    clearSelection,
+  } from "./lib/actions";
 
-  let resultText: string = "Please enter your name below 👇"
-  let name: string
+  let blenderInterval: ReturnType<typeof setInterval>;
 
-  function greet(): void {
-    Greet(name).then(result => resultText = result)
+  onMount(() => {
+    loadData();
+    blenderInterval = startBlenderPolling();
+  });
+
+  onDestroy(() => {
+    if (blenderInterval) clearInterval(blenderInterval);
+  });
+
+  // Esc key clears selection
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape" && $showBulkActions) {
+      clearSelection();
+    }
   }
 </script>
 
-<main>
-  <img alt="Wails logo" id="logo" src="{logo}">
-  <div class="result" id="result">{resultText}</div>
-  <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={name} class="input" id="name" type="text"/>
-    <button class="btn" on:click={greet}>Greet</button>
-  </div>
-</main>
+<svelte:window on:keydown={handleKeydown} />
+
+<div class="app">
+  <Sidebar />
+
+  <main class="main">
+    {#if $loading}
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <h2>Loading...</h2>
+      </div>
+    {:else if $assets.length === 0 && $activeCollectionId === null && !$filterTag && $filterTags.length === 0}
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h2>No assets yet</h2>
+        <p>Add a watch folder to start indexing .glb files.</p>
+        <button class="btn btn-primary" on:click={addFolder} style="margin-top: 1rem;">
+          + Add Watch Folder
+        </button>
+      </div>
+    {:else}
+      <div class="main-header">
+        <h2 class="view-label">{viewLabel()}</h2>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search files…"
+          bind:value={$searchQuery}
+        />
+        <span class="result-count">
+          {$filteredAssets.length} result{$filteredAssets.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {#if $tagsWithCounts.length > 0}
+        <div class="tag-bar">
+          {#each $tagsWithCounts as tag}
+            <button
+              class="tag-bar-chip"
+              class:active={$filterTags.includes(tag.name)}
+              on:click={() => toggleTagFilter(tag.name)}
+            >
+              {tag.name}
+              <span class="tag-bar-count">{tag.count}</span>
+            </button>
+          {/each}
+          {#if $filterTags.length > 0}
+            <button class="tag-bar-clear" on:click={clearTagFilters}>✕ clear</button>
+          {/if}
+        </div>
+      {/if}
+
+      {#if $showBulkActions && $selectedAssetIds.size > 0}
+        <BulkBar />
+      {/if}
+
+      <AssetGrid />
+    {/if}
+  </main>
+
+  <DetailPanel />
+  <Toast />
+</div>
 
 <style>
-
-  #logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    text-align: left;
   }
 
-  .result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
   }
-
-  .input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
-    border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
-    cursor: pointer;
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    opacity: 0.7;
   }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-state h2 { margin: 0 0 0.5rem; }
+  .empty-state p { margin: 0.25rem 0; }
 
-  .input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+  .main-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
   }
-
-  .input-box .input {
-    border: none;
-    border-radius: 3px;
+  .view-label {
+    margin: 0;
+    font-size: 1rem;
+    white-space: nowrap;
+    opacity: 0.7;
+  }
+  .search-input {
+    flex: 1;
+    max-width: 260px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    color: white;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.6rem;
     outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
+    font-family: inherit;
+  }
+  .search-input::placeholder { color: rgba(255, 255, 255, 0.25); }
+  .search-input:focus { border-color: rgba(80, 160, 255, 0.4); }
+  .result-count {
+    font-size: 0.7rem;
+    opacity: 0.35;
+    white-space: nowrap;
   }
 
-  .input-box .input:hover {
+  .tag-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+    align-items: center;
+  }
+  .tag-bar-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 99px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tag-bar-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .tag-bar-chip.active {
+    background: rgba(80, 160, 255, 0.25);
+    border-color: rgba(80, 160, 255, 0.4);
+    color: rgba(180, 220, 255, 1);
+  }
+  .tag-bar-count { font-size: 0.6rem; opacity: 0.4; }
+  .tag-bar-clear {
+    background: none;
     border: none;
-    background-color: rgba(255, 255, 255, 1);
+    color: rgba(255, 100, 100, 0.6);
+    cursor: pointer;
+    font-size: 0.65rem;
+    font-family: inherit;
+    padding: 0.15rem 0.4rem;
   }
+  .tag-bar-clear:hover { color: rgba(255, 100, 100, 0.9); }
 
-  .input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+  .btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: inherit;
+    transition: background 0.15s;
+    text-align: left;
   }
-
+  .btn:hover { background: rgba(255, 255, 255, 0.14); }
+  .btn-primary {
+    background: rgba(80, 160, 255, 0.25);
+    border-color: rgba(80, 160, 255, 0.4);
+  }
+  .btn-primary:hover { background: rgba(80, 160, 255, 0.35); }
 </style>
