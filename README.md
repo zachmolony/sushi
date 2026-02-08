@@ -5,8 +5,8 @@
 <h1 align="center">🍣 Sushi</h1>
 
 <p align="center">
-  <strong>A fast, lightweight 3D asset manager for your GLB/glTF library.</strong><br/>
-  Browse, tag, search, and send assets straight to Blender — all from a beautiful native desktop app.
+  <strong>A fast, lightweight 3D asset manager for your GLB library.</strong><br/>
+  Browse, tag, search, and send assets straight to Blender — all from a native desktop app.
 </p>
 
 <p align="center">
@@ -38,173 +38,61 @@
 <p align="center"><em>Select multiple assets for bulk tagging, collections, and export</em></p>
 
 <p align="center">
-  <video src="https://github.com/zachmolony/sushi/raw/main/.github/screenshots/blender-bridge.webm" width="800" controls></video>
+  <img src=".github/screenshots/blender-bridge.gif" width="800" alt="Blender bridge demo" />
 </p>
 <p align="center"><em>One-click send to Blender via the included addon</em></p>
 
 ## Features
 
-### 📦 Asset Library
-
-- **Watch folders** — Point Sushi at your asset directories and it auto-indexes every `.glb` and `.gltf` file recursively
-- **Auto thumbnails** — 3D previews rendered client-side with Three.js — no external tools needed
-- **Polycount display** — Triangle counts extracted automatically during thumbnail generation
-- **Folder browser** — Navigate your file tree with a collapsible sidebar folder hierarchy
-
-### 🏷️ Organization
-
-- **Tags** — Create and assign tags to any asset. Bulk-tag hundreds of assets at once. Tags are stackable — add `lowpoly`, `prop`, `interior` to the same asset and filter by any combination
-- **Smart tag filtering** — Click to include (blue), right-click to exclude (red). Combine filters freely
-- **Trays** — Playlists for 3D assets. Curate named sets like "🎮 PSX Horror Kit" or "🏠 Archviz Kitchen" — drag in assets from anywhere in your library regardless of folder or tags
-- **Search** — Instant filename search across your entire library
-
-### ⚡ Workflow
-
-- **Blender bridge** — One-click import into Blender via the included addon. Sushi detects when Blender is running
-- **Bulk selection** — Click, Shift+click range select, Ctrl+click multi-select, or select all
-- **Bulk actions** — Tag, add to tray, send to Blender, or delete multiple assets at once
-- **Sort by anything** — Name, date added, modified date, file size, or polycount (ascending/descending)
-
-### 🎨 Views & Navigation
-
-- **All Assets** — Your complete library
-- **Recently Added** — Latest imports at a glance
-- **Favorites** — Star assets you use often
-- **Recently Used** — Quick access to assets you've sent to Blender
-- **Per-folder browsing** — Filter by watch folder or drill into subfolders
-
-### 🖥️ Native Desktop App
-
-- Built with [Wails](https://wails.io) — native Go backend
-- Tiny binary (~15 MB), instant startup
-- SQLite database — everything stored locally, no cloud, no accounts
-- Linux-first (macOS and Windows support via Wails)
+- **Watch folders** — auto-indexes `.glb` and `.gltf` files recursively
+- **Auto thumbnails** — 3D previews rendered client-side with Three.js
+- **Tags** — stackable tags with smart filtering (click to include, right-click to exclude)
+- **Trays** — playlists for 3D assets, like "🎮 PSX Horror Kit" or "🏠 Archviz Kitchen"
+- **Blender bridge** — one-click import into Blender via the included addon
+- **Bulk actions** — tag, tray, send to Blender, or delete multiple assets at once
+- **Sort & search** — by name, date, size, or polycount
+- **Views** — All Assets, Recently Added, Favorites, Recently Used, per-folder browsing
+- **Native & fast** — ~15 MB binary, SQLite, no cloud, no accounts
 
 ## Installation
 
-### Pre-built Binary
-
-Download the latest release from the [Releases](https://github.com/zachmolony/sushi/releases) page.
-
-### Build from Source
-
-**Prerequisites:**
-
-- [Go](https://go.dev/dl/) 1.24+
-- [Node.js](https://nodejs.org/) 18+
-- [Wails CLI](https://wails.io/docs/gettingstarted/installation) v2
+Download the latest binary from [Releases](https://github.com/zachmolony/sushi/releases), or build from source:
 
 ```bash
-# Install Wails CLI
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-# Clone and build
 git clone https://github.com/zachmolony/sushi.git
 cd sushi
-wails build
+make install   # builds and installs to ~/.local/bin with desktop entry
 ```
 
-The binary will be at `build/bin/sushi`.
-
-### Install on Linux
-
-```bash
-# Copy binary
-cp build/bin/sushi ~/.local/bin/
-
-# Install icon
-cp build/appicon.png ~/.local/share/icons/sushi.png
-
-# Create desktop entry
-cat > ~/.local/share/applications/sushi.desktop << 'EOF'
-[Desktop Entry]
-Name=Sushi
-Comment=3D Asset Manager
-Exec=sushi
-Icon=sushi
-Type=Application
-Categories=Graphics;3DGraphics;Utility;
-Terminal=false
-EOF
-```
+> Requires [Go](https://go.dev/dl/) 1.24+, [Node.js](https://nodejs.org/) 18+, and the GTK/WebKit dev libraries (`sudo apt install libgtk-3-dev libwebkit2gtk-4.0-dev` on Ubuntu/Debian).
 
 ## Blender Addon
 
-Sushi includes a lightweight Blender addon that receives assets over a local HTTP bridge.
+Sushi can send assets directly into Blender with one click. To set it up:
 
-### Install
-
-1. Open Blender → **Edit** → **Preferences** → **Add-ons** → **Install…**
+1. In Blender, go to **Edit → Preferences → Add-ons → Install…**
 2. Select `blender/sushi_bridge.py` from this repo
 3. Enable **"Import: Sushi Bridge"**
 
-That's it. When the addon is active, Sushi will detect the connection automatically (shown with a 🟢 indicator in the sidebar). Click any asset's **"Send to Blender"** button and it'll appear in your scene.
+Once active, a 🟢 indicator appears in Sushi's sidebar. Hit **"Send to Blender"** on any asset and it lands in your scene.
 
-### How It Works
-
-The addon runs a tiny HTTP server on `127.0.0.1:29877` (local only — nothing leaves your machine). Sushi sends import requests, and the addon calls `bpy.ops.import_scene.gltf()` to bring models into your active Blender scene.
+The addon runs a local HTTP server on `127.0.0.1:29877` — nothing leaves your machine.
 
 ## Data Storage
 
-Everything is stored locally:
-
-| What       | Where                              |
-| ---------- | ---------------------------------- |
-| Database   | `~/.local/share/sushi/sushi.db`    |
-| Thumbnails | `~/.local/share/sushi/thumbnails/` |
-
-No cloud. No telemetry. No accounts. Your files stay yours.
+All data is local — database at `~/.local/share/sushi/sushi.db`, thumbnails in `~/.local/share/sushi/thumbnails/`. No cloud, no telemetry.
 
 ## Development
 
 ```bash
-# Live development with hot-reload
-wails dev
-
-# Frontend only (connects to Go backend at :34115)
-cd frontend && npm run dev
-
-# Build production binary
-wails build
-```
-
-### Project Structure
-
-```
-├── main.go              # Wails app entry point
-├── app.go               # Go methods exposed to frontend
-├── database.go          # SQLite database layer
-├── scanner.go           # File system scanner
-├── blender_bridge.go    # Blender addon HTTP bridge
-├── fileserver.go        # Local file server for thumbnails
-├── blender/
-│   └── sushi_bridge.py  # Blender addon
-└── frontend/
-    └── src/
-        ├── App.svelte       # Root component
-        └── lib/
-            ├── actions.ts       # All frontend logic
-            ├── stores.ts        # Svelte stores (state)
-            ├── thumbnails.ts    # Three.js thumbnail renderer
-            ├── Sidebar.svelte   # Folder tree, tags, collections
-            ├── AssetGrid.svelte # Main asset grid
-            ├── AssetCard.svelte # Individual asset card
-            ├── DetailPanel.svelte # Asset detail sidebar
-            ├── BulkBar.svelte   # Bulk action toolbar
-            ├── FolderTree.svelte  # Recursive folder browser
-            └── Toast.svelte     # Notification toasts
+wails dev          # live dev with hot-reload
+wails build        # production binary
 ```
 
 ## Tech Stack
 
-| Layer        | Tech                                                                             |
-| ------------ | -------------------------------------------------------------------------------- |
-| Backend      | Go 1.24 + [Wails v2](https://wails.io)                                           |
-| Frontend     | [Svelte 3](https://svelte.dev) + TypeScript                                      |
-| Styling      | [Tailwind CSS 3](https://tailwindcss.com)                                        |
-| 3D Rendering | [Three.js](https://threejs.org) (GLTFLoader)                                     |
-| Database     | SQLite via [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite) (pure Go) |
-| Build        | Vite 3                                                                           |
+Go · Svelte · Tailwind CSS · Three.js · SQLite · Vite — built with [Wails](https://wails.io)
 
 ## License
 
