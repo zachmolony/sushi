@@ -47,27 +47,27 @@ function ensureRenderer(): boolean {
     renderer.setSize(THUMB_SIZE, THUMB_SIZE);
     renderer.setClearColor(0x1a1a2e, 1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMapping = THREE.NeutralToneMapping;
+    renderer.toneMappingExposure = 1.5;
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a2e);
 
     camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1000);
 
-    // Lighting — slightly brighter for thumbnails
-    const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+    // Lighting — bright enough for unlit / vertex-color models
+    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
     scene.add(ambient);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
     fillLight.position.set(-5, 3, -5);
     scene.add(fillLight);
 
-    const backLight = new THREE.DirectionalLight(0xffffff, 0.2);
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
     backLight.position.set(0, -5, -10);
     scene.add(backLight);
 
@@ -81,12 +81,17 @@ function ensureRenderer(): boolean {
   }
 }
 
+export interface ThumbnailResult {
+  dataUrl: string;
+  polyCount: number;
+}
+
 /**
  * Render a GLB/GLTF file to a base64 PNG thumbnail.
  * Expects a URL like "/localfile/?path=..." served by the Go backend.
  * Returns null if WebGL is unavailable.
  */
-export async function renderThumbnail(url: string): Promise<string | null> {
+export async function renderThumbnail(url: string): Promise<ThumbnailResult | null> {
   if (!ensureRenderer()) {
     console.warn("[sushi] Skipping thumbnail — no WebGL");
     return null;
@@ -130,9 +135,23 @@ export async function renderThumbnail(url: string): Promise<string | null> {
   }
 }
 
-function renderGLTF(gltf: any): string {
+function renderGLTF(gltf: any): ThumbnailResult {
   const model = gltf.scene;
   scene!.add(model);
+
+  // Count triangles
+  let polyCount = 0;
+  model.traverse((child: any) => {
+    if (child.isMesh && child.geometry) {
+      const geom = child.geometry;
+      if (geom.index) {
+        polyCount += geom.index.count / 3;
+      } else if (geom.attributes.position) {
+        polyCount += geom.attributes.position.count / 3;
+      }
+    }
+  });
+  polyCount = Math.round(polyCount);
 
   // Auto-frame: compute bounding box and position camera
   const box = new THREE.Box3().setFromObject(model);
@@ -171,8 +190,9 @@ function renderGLTF(gltf: any): string {
   console.log(
     "[sushi] Rendered thumbnail:",
     dataUrl.length,
-    "chars",
-    dataUrl.substring(0, 40) + "...",
+    "chars,",
+    polyCount,
+    "tris",
   );
-  return dataUrl;
+  return { dataUrl, polyCount };
 }

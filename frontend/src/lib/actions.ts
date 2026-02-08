@@ -17,6 +17,7 @@ import {
   BulkTagAssets,
   BulkAddToCollection,
   SaveThumbnail,
+  SavePolyCount,
   CreateCollection,
   GetCollections,
   DeleteCollection,
@@ -101,19 +102,32 @@ export async function generateMissingThumbnails() {
   const cache = { ...get(thumbnailCache) };
 
   for (const asset of currentAssets) {
-    if (asset.thumbnail) {
+    if (asset.thumbnail && asset.poly_count > 0) {
       cache[asset.id] = asset.thumbnail;
       cached++;
       continue;
     }
+
+    // Has thumbnail but no poly count — need to re-parse for count
+    const needsPolyOnly = !!asset.thumbnail && asset.poly_count === 0;
+    if (needsPolyOnly) {
+      cache[asset.id] = asset.thumbnail;
+      cached++;
+    }
+
     try {
       const url = `${base}/localfile/?path=${encodeURIComponent(asset.absolute_path)}`;
-      const dataUrl = await renderThumbnail(url);
-      if (dataUrl) {
-        cache[asset.id] = dataUrl;
-        SaveThumbnail(asset.id, dataUrl).catch(() => {});
-        generated++;
-      } else {
+      const result = await renderThumbnail(url);
+      if (result) {
+        if (!needsPolyOnly) {
+          cache[asset.id] = result.dataUrl;
+          SaveThumbnail(asset.id, result.dataUrl).catch(() => {});
+          generated++;
+        }
+        if (result.polyCount > 0) {
+          SavePolyCount(asset.id, result.polyCount).catch(() => {});
+        }
+      } else if (!needsPolyOnly) {
         failed++;
       }
     } catch (e) {
@@ -278,6 +292,7 @@ export function handleAssetClick(asset: Asset, index: number, e: MouseEvent) {
   const fa = get(filteredAssets);
 
   if (e.ctrlKey || e.metaKey) {
+    // Ctrl/Cmd+click: toggle this item in selection
     const next = new Set(ids);
     if (next.has(asset.id)) {
       next.delete(asset.id);
@@ -288,6 +303,7 @@ export function handleAssetClick(asset: Asset, index: number, e: MouseEvent) {
     lastClickedIndex.set(index);
     showBulkActions.set(next.size > 0);
   } else if (e.shiftKey && get(lastClickedIndex) >= 0) {
+    // Shift+click: range select
     const start = Math.min(get(lastClickedIndex), index);
     const end = Math.max(get(lastClickedIndex), index);
     const next = new Set(ids);
@@ -296,9 +312,21 @@ export function handleAssetClick(asset: Asset, index: number, e: MouseEvent) {
     }
     selectedAssetIds.set(next);
     showBulkActions.set(next.size > 0);
+  } else if (ids.size > 0) {
+    // Already in bulk-select mode: toggle this item (don't nuke the selection)
+    const next = new Set(ids);
+    if (next.has(asset.id)) {
+      next.delete(asset.id);
+    } else {
+      next.add(asset.id);
+    }
+    selectedAssetIds.set(next);
+    lastClickedIndex.set(index);
+    showBulkActions.set(next.size > 0);
+    // Also show detail panel for the clicked asset
+    selectAsset(asset);
   } else {
-    selectedAssetIds.set(new Set());
-    showBulkActions.set(false);
+    // No selection active: just open detail panel
     lastClickedIndex.set(index);
     selectAsset(asset);
   }
@@ -315,6 +343,18 @@ export function selectAllVisible() {
 export function clearSelection() {
   selectedAssetIds.set(new Set());
   showBulkActions.set(false);
+}
+
+export function toggleAssetSelection(assetId: number) {
+  const ids = get(selectedAssetIds);
+  const next = new Set(ids);
+  if (next.has(assetId)) {
+    next.delete(assetId);
+  } else {
+    next.add(assetId);
+  }
+  selectedAssetIds.set(next);
+  showBulkActions.set(next.size > 0);
 }
 
 // --- Bulk actions ---

@@ -130,6 +130,10 @@ export function RescanFolder(arg1) {
   return window['go']['main']['App']['RescanFolder'](arg1);
 }
 
+export function SavePolyCount(arg1, arg2) {
+  return window['go']['main']['App']['SavePolyCount'](arg1, arg2);
+}
+
 export function SaveThumbnail(arg1, arg2) {
   return window['go']['main']['App']['SaveThumbnail'](arg1, arg2);
 }

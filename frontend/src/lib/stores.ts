@@ -20,7 +20,7 @@ export type ViewId = "all" | "untagged" | "recent-added" | "recent-used" | "favo
 export const activeView = writable<ViewId>("all");
 
 // --- Sorting ---
-export type SortField = "name" | "date-added" | "file-modified" | "file-size";
+export type SortField = "name" | "date-added" | "file-modified" | "file-size" | "poly-count";
 export type SortDirection = "asc" | "desc";
 export const sortField = writable<SortField>("name");
 export const sortDirection = writable<SortDirection>("asc");
@@ -74,6 +74,8 @@ export const filteredAssets = derived(
           return dir * (new Date(a.modified_at).getTime() - new Date(b.modified_at).getTime());
         case "file-size":
           return dir * (a.file_size - b.file_size);
+        case "poly-count":
+          return dir * ((a.poly_count || 0) - (b.poly_count || 0));
         default:
           return 0;
       }

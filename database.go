@@ -28,6 +28,7 @@ type Asset struct {
 	Thumbnail    string `json:"thumbnail"`
 	Favorited    int64  `json:"favorited"`
 	LastUsedAt   string `json:"last_used_at"`
+	PolyCount    int64  `json:"poly_count"`
 	CreatedAt    string `json:"created_at"`
 	UpdatedAt    string `json:"updated_at"`
 }
@@ -84,6 +85,7 @@ func (d *Database) migrate() error {
 		thumbnail     TEXT    DEFAULT '',
 		favorited     INTEGER NOT NULL DEFAULT 0,
 		last_used_at  TEXT    DEFAULT '',
+		poly_count    INTEGER NOT NULL DEFAULT 0,
 		created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
 		updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 	);
@@ -125,6 +127,7 @@ func (d *Database) migrate() error {
 	// Add columns if they don't exist (for existing databases)
 	d.db.Exec("ALTER TABLE assets ADD COLUMN favorited INTEGER NOT NULL DEFAULT 0")
 	d.db.Exec("ALTER TABLE assets ADD COLUMN last_used_at TEXT DEFAULT ''")
+	d.db.Exec("ALTER TABLE assets ADD COLUMN poly_count INTEGER NOT NULL DEFAULT 0")
 
 	return nil
 }
@@ -192,14 +195,14 @@ func (d *Database) UpsertAsset(absolutePath string, folderID int64, fileSize int
 		return nil, err
 	}
 
-	row := d.db.QueryRow("SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, created_at, updated_at FROM assets WHERE absolute_path = ?", absolutePath)
+	row := d.db.QueryRow("SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, poly_count, created_at, updated_at FROM assets WHERE absolute_path = ?", absolutePath)
 	a := &Asset{}
-	err = row.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt)
+	err = row.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt)
 	return a, err
 }
 
 func (d *Database) ListAssets() ([]Asset, error) {
-	rows, err := d.db.Query("SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, created_at, updated_at FROM assets ORDER BY filename")
+	rows, err := d.db.Query("SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, poly_count, created_at, updated_at FROM assets ORDER BY filename")
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +211,7 @@ func (d *Database) ListAssets() ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -256,7 +259,7 @@ func (d *Database) PruneAssetsForFolder(folderID int64) (int, error) {
 
 func (d *Database) GetUntaggedAssets() ([]Asset, error) {
 	rows, err := d.db.Query(`
-		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.created_at, a.updated_at
+		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.poly_count, a.created_at, a.updated_at
 		FROM assets a
 		LEFT JOIN asset_tags at ON at.asset_id = a.id
 		WHERE at.asset_id IS NULL
@@ -270,7 +273,7 @@ func (d *Database) GetUntaggedAssets() ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -280,7 +283,7 @@ func (d *Database) GetUntaggedAssets() ([]Asset, error) {
 
 func (d *Database) GetFavoritedAssets() ([]Asset, error) {
 	rows, err := d.db.Query(`
-		SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, created_at, updated_at
+		SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, poly_count, created_at, updated_at
 		FROM assets WHERE favorited = 1 ORDER BY filename
 	`)
 	if err != nil {
@@ -291,7 +294,7 @@ func (d *Database) GetFavoritedAssets() ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -329,7 +332,7 @@ func (d *Database) BulkSetFavorite(assetIDs []int64, favorited bool) error {
 
 func (d *Database) GetRecentlyUsedAssets(limit int) ([]Asset, error) {
 	rows, err := d.db.Query(`
-		SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, created_at, updated_at
+		SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, poly_count, created_at, updated_at
 		FROM assets WHERE last_used_at != '' ORDER BY last_used_at DESC LIMIT ?
 	`, limit)
 	if err != nil {
@@ -340,7 +343,7 @@ func (d *Database) GetRecentlyUsedAssets(limit int) ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -350,7 +353,7 @@ func (d *Database) GetRecentlyUsedAssets(limit int) ([]Asset, error) {
 
 func (d *Database) GetRecentlyAddedAssets(limit int) ([]Asset, error) {
 	rows, err := d.db.Query(`
-		SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, created_at, updated_at
+		SELECT id, absolute_path, filename, folder_id, file_size, modified_at, thumbnail, favorited, last_used_at, poly_count, created_at, updated_at
 		FROM assets ORDER BY created_at DESC LIMIT ?
 	`, limit)
 	if err != nil {
@@ -361,7 +364,7 @@ func (d *Database) GetRecentlyAddedAssets(limit int) ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -495,7 +498,7 @@ func (d *Database) Close() error {
 
 func (d *Database) GetAssetsByTag(tagName string) ([]Asset, error) {
 	rows, err := d.db.Query(`
-		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.created_at, a.updated_at
+		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.poly_count, a.created_at, a.updated_at
 		FROM assets a
 		JOIN asset_tags at ON at.asset_id = a.id
 		JOIN tags t ON t.id = at.tag_id
@@ -510,7 +513,7 @@ func (d *Database) GetAssetsByTag(tagName string) ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -535,7 +538,7 @@ func (d *Database) GetAssetsByTags(tagNames []string) ([]Asset, error) {
 	args = append(args, len(tagNames))
 
 	query := fmt.Sprintf(`
-		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.created_at, a.updated_at
+		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.poly_count, a.created_at, a.updated_at
 		FROM assets a
 		JOIN asset_tags at ON at.asset_id = a.id
 		JOIN tags t ON t.id = at.tag_id
@@ -554,7 +557,7 @@ func (d *Database) GetAssetsByTags(tagNames []string) ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -645,7 +648,7 @@ func (d *Database) RemoveAssetFromCollection(collectionID, assetID int64) error 
 
 func (d *Database) GetAssetsInCollection(collectionID int64) ([]Asset, error) {
 	rows, err := d.db.Query(`
-		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.created_at, a.updated_at
+		SELECT a.id, a.absolute_path, a.filename, a.folder_id, a.file_size, a.modified_at, a.thumbnail, a.favorited, a.last_used_at, a.poly_count, a.created_at, a.updated_at
 		FROM assets a
 		JOIN collection_assets ca ON ca.asset_id = a.id
 		WHERE ca.collection_id = ?
@@ -659,7 +662,7 @@ func (d *Database) GetAssetsInCollection(collectionID int64) ([]Asset, error) {
 	var assets []Asset
 	for rows.Next() {
 		var a Asset
-		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize, &a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		assets = append(assets, a)
@@ -696,6 +699,11 @@ func (d *Database) GetCollectionsForAsset(assetID int64) ([]Collection, error) {
 
 func (d *Database) SetThumbnail(assetID int64, base64PNG string) error {
 	_, err := d.db.Exec("UPDATE assets SET thumbnail = ? WHERE id = ?", base64PNG, assetID)
+	return err
+}
+
+func (d *Database) SetPolyCount(assetID int64, count int64) error {
+	_, err := d.db.Exec("UPDATE assets SET poly_count = ? WHERE id = ?", count, assetID)
 	return err
 }
 

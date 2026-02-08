@@ -24,6 +24,12 @@
   let newTagInput = "";
   let showTagSuggestions = false;
 
+  function formatPoly(count: number): string {
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + "M";
+    if (count >= 1_000) return (count / 1_000).toFixed(1) + "K";
+    return count.toString();
+  }
+
   // Suggestions: existing tags not already on the asset, then prebuilt
   $: assetTagNames = $selectedAssetTags.map((t) => t.name);
   $: existingNotApplied = $tagsWithCounts.filter((t) => !assetTagNames.includes(t.name)).map((t) => t.name).slice(0, 6);
@@ -84,6 +90,12 @@
         <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Size</span>
         <span class="text-[0.78rem] opacity-80">{formatSize($selectedAsset.file_size)}</span>
       </div>
+      {#if $selectedAsset.poly_count > 0}
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Triangles</span>
+          <span class="text-[0.78rem] opacity-80">{formatPoly($selectedAsset.poly_count)} tris</span>
+        </div>
+      {/if}
       <div class="flex flex-col gap-0.5">
         <span class="text-[0.65rem] uppercase tracking-wider opacity-40">Modified</span>
         <span class="text-[0.78rem] opacity-80">{new Date($selectedAsset.modified_at).toLocaleDateString()}</span>

@@ -10,6 +10,7 @@ export namespace main {
 	    thumbnail: string;
 	    favorited: number;
 	    last_used_at: string;
+	    poly_count: number;
 	    created_at: string;
 	    updated_at: string;
 	
@@ -28,6 +29,7 @@ export namespace main {
 	        this.thumbnail = source["thumbnail"];
 	        this.favorited = source["favorited"];
 	        this.last_used_at = source["last_used_at"];
+	        this.poly_count = source["poly_count"];
 	        this.created_at = source["created_at"];
 	        this.updated_at = source["updated_at"];
 	    }

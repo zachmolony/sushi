@@ -260,6 +260,12 @@ func (a *App) SaveThumbnail(assetID int64, base64PNG string) error {
 	return a.db.SetThumbnail(assetID, base64PNG)
 }
 
+// SavePolyCount saves the triangle/polygon count for an asset.
+// Called from the frontend after parsing with Three.js.
+func (a *App) SavePolyCount(assetID int64, count int64) error {
+	return a.db.SetPolyCount(assetID, count)
+}
+
 // GetThumbnail returns the base64 PNG data for an asset's thumbnail.
 func (a *App) GetThumbnail(assetID int64) (string, error) {
 	return a.db.GetThumbnail(assetID)

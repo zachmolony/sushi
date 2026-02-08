@@ -8,7 +8,13 @@
     collections,
     hoverAssetId,
   } from "./stores";
-  import { handleAssetClick, hoverAddToCollection } from "./actions";
+  import { handleAssetClick, hoverAddToCollection, toggleAssetSelection } from "./actions";
+
+  function formatPoly(count: number): string {
+    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + "M";
+    if (count >= 1_000) return (count / 1_000).toFixed(1) + "K";
+    return count.toString();
+  }
 </script>
 
 {#if $filteredAssets.length === 0}
@@ -42,7 +48,24 @@
             <span class="text-xl opacity-20 font-bold">.glb</span>
           {/if}
           {#if $selectedAssetIds.has(asset.id)}
-            <div class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-[0.6rem] font-bold shadow-md">✓</div>
+            <!-- Selected: always show filled checkbox -->
+            <button
+              class="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-green-500 flex items-center justify-center text-white text-[0.7rem] font-bold shadow-md z-20 cursor-pointer border-none p-0 hover:bg-green-400 transition-colors"
+              on:click|stopPropagation={(e) => toggleAssetSelection(asset.id)}
+              title="Deselect"
+            >✓</button>
+          {:else if $hoverAssetId === asset.id || $showBulkActions}
+            <!-- Hover or bulk mode: show empty checkbox -->
+            <button
+              class="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-black/50 border-2 border-white/30 flex items-center justify-center z-20 cursor-pointer p-0 hover:border-green-400/70 hover:bg-black/70 transition-colors backdrop-blur-sm"
+              on:click|stopPropagation={(e) => toggleAssetSelection(asset.id)}
+              title="Select"
+            ></button>
+          {/if}
+          {#if asset.poly_count > 0}
+            <div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[0.6rem] text-white/80 font-mono leading-none backdrop-blur-sm">
+              {formatPoly(asset.poly_count)} △
+            </div>
           {/if}
           {#if $hoverAssetId === asset.id && $collections.length > 0 && !$showBulkActions}
             <div class="absolute bottom-1 right-1 flex gap-0.5 z-10">

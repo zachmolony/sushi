@@ -95,6 +95,7 @@
             <option value="date-added">Date Added</option>
             <option value="file-modified">Modified</option>
             <option value="file-size">Size</option>
+            <option value="poly-count">Polys</option>
           </select>
           <button
             class="bg-surface border border-surface-border rounded text-white/60 text-sm px-1.5 py-0.5 cursor-pointer font-inherit hover:bg-surface-hover transition-colors leading-none"

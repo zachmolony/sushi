@@ -66,6 +66,8 @@ export function RenameCollection(arg1:number,arg2:string):Promise<void>;
 
 export function RescanFolder(arg1:number):Promise<Array<main.Asset>>;
 
+export function SavePolyCount(arg1:number,arg2:number):Promise<void>;
+
 export function SaveThumbnail(arg1:number,arg2:string):Promise<void>;
 
 export function SendToBlender(arg1:Array<string>):Promise<main.BlenderStatus>;

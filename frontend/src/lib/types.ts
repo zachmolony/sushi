@@ -8,6 +8,7 @@ export interface Asset {
   thumbnail: string;
   favorited: number;
   last_used_at: string;
+  poly_count: number;
   created_at: string;
   updated_at: string;
 }
