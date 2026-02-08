@@ -65,7 +65,7 @@ cd sushi
 make install   # builds and installs to ~/.local/bin with desktop entry
 ```
 
-> Requires [Go](https://go.dev/dl/) 1.24+, [Node.js](https://nodejs.org/) 18+, and the GTK/WebKit dev libraries (`sudo apt install libgtk-3-dev libwebkit2gtk-4.0-dev` on Ubuntu/Debian).
+> Requires [Go](https://go.dev/dl/) 1.24+, [Node.js](https://nodejs.org/) 18+, and GTK/WebKit dev libraries (`sudo apt install libgtk-3-dev libwebkit2gtk-4.0-dev` on Ubuntu 22.04, or `libwebkit2gtk-4.1-dev` on 24.04+).
 
 ## Blender Addon (Sushi Bridge)
 
