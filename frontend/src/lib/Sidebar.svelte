@@ -17,19 +17,16 @@
     clearTagFilters,
     setCollectionFilter,
     setActiveView,
-    createCollection,
     deleteCollectionById,
     clearFolderFilter,
-    SHELF_ICONS,
     regenerateAllThumbnails,
   } from "./actions";
   import { blenderConnected } from "./stores";
   import type { ViewId } from "./stores";
   import FolderTree from "./FolderTree.svelte";
+  import NewTrayForm from "./NewTrayForm.svelte";
 
   let showNewCollection = false;
-  let newCollectionName = "";
-  let newCollectionIcon = "📁";
 
   // Build folder tree from asset paths
   interface FolderNode {
@@ -134,18 +131,6 @@
     { id: "recent-used", label: "Recently Used", icon: "🕐" },
     { id: "favorites", label: "Favorites", icon: "⭐" },
   ];
-
-  function handleNewCollectionKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter") doCreateCollection();
-    if (e.key === "Escape") showNewCollection = false;
-  }
-
-  async function doCreateCollection() {
-    await createCollection(newCollectionName, newCollectionIcon);
-    newCollectionName = "";
-    newCollectionIcon = "📁";
-    showNewCollection = false;
-  }
 </script>
 
 <aside
@@ -288,36 +273,7 @@
         </div>
       {/each}
       {#if showNewCollection}
-        <div class="flex flex-col gap-1.5 p-2 bg-white/[0.04] rounded-md mt-1">
-          <div class="flex flex-wrap gap-0.5">
-            {#each SHELF_ICONS as icon}
-              <button
-                class="w-[26px] h-[26px] flex items-center justify-center rounded cursor-pointer text-sm transition-colors border
-                  {newCollectionIcon === icon
-                  ? 'bg-accent-dim border-accent-border'
-                  : 'bg-white/[0.04] border-transparent hover:bg-white/10'}"
-                on:click={() => (newCollectionIcon = icon)}>{icon}</button
-              >
-            {/each}
-          </div>
-          <input
-            type="text"
-            class="w-full bg-transparent border-b border-white/10 text-white text-[0.7rem] py-0.5 outline-none font-inherit placeholder:text-white/25 focus:border-b-accent/50"
-            placeholder="tray name…"
-            bind:value={newCollectionName}
-            on:keydown={handleNewCollectionKeydown}
-          />
-          <div class="flex gap-1">
-            <button
-              class="px-2 py-1 rounded-md text-xs bg-accent-dim border border-accent-border text-white cursor-pointer font-inherit hover:bg-accent-hover transition-colors"
-              on:click={doCreateCollection}>Create</button
-            >
-            <button
-              class="px-2 py-1 rounded-md text-xs bg-surface border border-surface-border text-white opacity-60 cursor-pointer font-inherit hover:bg-surface-hover transition-colors"
-              on:click={() => (showNewCollection = false)}>Cancel</button
-            >
-          </div>
-        </div>
+        <NewTrayForm compact={false} onClose={() => (showNewCollection = false)} />
       {:else}
         <button
           class="w-full text-center px-2 py-1.5 rounded-md text-xs bg-accent-glow border border-accent-border/75 text-white cursor-pointer font-inherit hover:bg-accent-dim transition-colors"

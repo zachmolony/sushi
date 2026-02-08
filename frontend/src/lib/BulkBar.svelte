@@ -14,16 +14,13 @@
     bulkSendToBlender,
     bulkSetFavorite,
     bulkDeleteAssets,
-    createCollection,
     SUGGESTED_TAGS,
-    SHELF_ICONS,
   } from "./actions";
+  import NewTrayForm from "./NewTrayForm.svelte";
 
   let bulkTagInput = "";
   let showSuggestions = false;
   let showNewCollection = false;
-  let newCollectionName = "";
-  let newCollectionIcon = "📁";
   let confirmBulkDelete = false;
 
   // Build suggestions: most-used tags first, then prebuilt tags not yet in the list
@@ -55,14 +52,6 @@
     bulkTag(tag);
     bulkTagInput = "";
     showSuggestions = false;
-  }
-
-  async function doCreateCollection() {
-    if (!newCollectionName.trim()) return;
-    await createCollection(newCollectionName, newCollectionIcon);
-    newCollectionName = "";
-    newCollectionIcon = "📁";
-    showNewCollection = false;
   }
 </script>
 
@@ -192,36 +181,6 @@
 
   <!-- New tray inline form -->
   {#if showNewCollection}
-    <div class="flex items-center gap-2 flex-wrap">
-      <div class="flex gap-0.5">
-        {#each SHELF_ICONS.slice(0, 8) as icon}
-          <button
-            class="w-[22px] h-[22px] flex items-center justify-center rounded cursor-pointer text-[0.7rem] transition-colors border
-              {newCollectionIcon === icon
-              ? 'bg-accent-dim border-accent-border'
-              : 'bg-white/[0.04] border-transparent hover:bg-white/10'}"
-            on:click={() => (newCollectionIcon = icon)}>{icon}</button
-          >
-        {/each}
-      </div>
-      <input
-        type="text"
-        class="w-28 bg-surface border border-surface-border rounded text-white text-xs px-2 py-1 outline-none font-inherit placeholder:text-white/30 focus:border-accent/50"
-        placeholder="tray name…"
-        bind:value={newCollectionName}
-        on:keydown={(e) => {
-          if (e.key === "Enter") doCreateCollection();
-          if (e.key === "Escape") showNewCollection = false;
-        }}
-      />
-      <button
-        class="px-2.5 py-1 rounded-md text-xs bg-accent-dim border border-accent-border text-white cursor-pointer font-inherit hover:bg-accent-hover transition-colors"
-        on:click={doCreateCollection}>Create</button
-      >
-      <button
-        class="px-2 py-1 rounded-md text-xs bg-surface border border-surface-border text-white/60 cursor-pointer font-inherit hover:bg-surface-hover transition-colors"
-        on:click={() => (showNewCollection = false)}>✕</button
-      >
-    </div>
+    <NewTrayForm compact={true} onClose={() => (showNewCollection = false)} />
   {/if}
 </div>
