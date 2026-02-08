@@ -18,6 +18,10 @@ export function BulkAddToCollection(arg1, arg2) {
   return window['go']['main']['App']['BulkAddToCollection'](arg1, arg2);
 }
 
+export function BulkDeleteAssets(arg1) {
+  return window['go']['main']['App']['BulkDeleteAssets'](arg1);
+}
+
 export function BulkSetFavorite(arg1, arg2) {
   return window['go']['main']['App']['BulkSetFavorite'](arg1, arg2);
 }
@@ -26,8 +30,16 @@ export function BulkTagAssets(arg1, arg2) {
   return window['go']['main']['App']['BulkTagAssets'](arg1, arg2);
 }
 
+export function ClearAllThumbnails() {
+  return window['go']['main']['App']['ClearAllThumbnails']();
+}
+
 export function CreateCollection(arg1, arg2) {
   return window['go']['main']['App']['CreateCollection'](arg1, arg2);
+}
+
+export function DeleteAsset(arg1) {
+  return window['go']['main']['App']['DeleteAsset'](arg1);
 }
 
 export function DeleteCollection(arg1) {
@@ -36,6 +48,10 @@ export function DeleteCollection(arg1) {
 
 export function GetAllTags() {
   return window['go']['main']['App']['GetAllTags']();
+}
+
+export function GetAssetIDsByTags(arg1) {
+  return window['go']['main']['App']['GetAssetIDsByTags'](arg1);
 }
 
 export function GetAssets() {

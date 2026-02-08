@@ -9,6 +9,7 @@ import {
   GetAssets,
   GetAssetsByTag,
   GetAssetsByTags,
+  GetAssetIDsByTags,
   GetAllTags,
   GetTagsWithCounts,
   GetTagsForAsset,
@@ -33,6 +34,9 @@ import {
   GetRecentlyAddedAssets,
   GetRecentlyUsedAssets,
   BulkSetFavorite,
+  DeleteAsset,
+  BulkDeleteAssets,
+  ClearAllThumbnails,
 } from "../../wailsjs/go/main/App.js";
 import { ClipboardSetText } from "../../wailsjs/runtime/runtime.js";
 import { renderThumbnail } from "./thumbnails";
@@ -46,6 +50,7 @@ import {
   loading,
   filterTag,
   filterTags,
+  excludeTags,
   activeCollectionId,
   activeView,
   sortField,
@@ -56,6 +61,7 @@ import {
   selectedAssetIds,
   lastClickedIndex,
   showBulkActions,
+  detailPanelOpen,
   thumbnailCache,
   fileServerBase,
   blenderConnected,
@@ -65,6 +71,7 @@ import {
   filteredAssets,
 } from "./stores";
 import type { ViewId, SortField, SortDirection } from "./stores";
+import { activeFolderPath } from "./stores";
 
 // --- Toast ---
 
@@ -137,8 +144,27 @@ export async function generateMissingThumbnails() {
   }
   thumbnailCache.set(cache);
   console.log(
-    `[sushi] Thumbnails: ${cached} cached, ${generated} generated, ${failed} failed`
+    `[sushi] Thumbnails: ${cached} cached, ${generated} generated, ${failed} failed`,
   );
+}
+
+export async function regenerateAllThumbnails() {
+  try {
+    const count = await ClearAllThumbnails();
+    thumbnailCache.set({});
+    // Clear in-memory thumbnail fields so generateMissing picks them all up
+    assets.update((all) =>
+      all.map((a) => ({ ...a, thumbnail: "", poly_count: 0 })),
+    );
+    displayedAssets.update((all) =>
+      all.map((a) => ({ ...a, thumbnail: "", poly_count: 0 })),
+    );
+    showToast(`Cleared ${count} thumbnails — regenerating…`);
+    await generateMissingThumbnails();
+    showToast("All thumbnails regenerated!");
+  } catch (e) {
+    showToast("Failed to clear thumbnails");
+  }
 }
 
 // --- Init ---
@@ -184,39 +210,55 @@ export async function applyFilter() {
   const fTags = get(filterTags);
   const fTag = get(filterTag);
   const view = get(activeView);
+  const folderPath = get(activeFolderPath);
   try {
+    let result: Asset[];
     if (colId !== null) {
-      const a = await GetCollectionAssets(colId);
-      displayedAssets.set(a || []);
+      result = (await GetCollectionAssets(colId)) || [];
     } else if (fTags.length > 0) {
-      const a = await GetAssetsByTags(fTags);
-      displayedAssets.set(a || []);
+      result = (await GetAssetsByTags(fTags)) || [];
     } else if (fTag) {
-      const a = await GetAssetsByTag(fTag);
-      displayedAssets.set(a || []);
+      result = (await GetAssetsByTag(fTag)) || [];
     } else {
       // Apply smart view
-      let a: Asset[];
       switch (view) {
         case "untagged":
-          a = await GetUntaggedAssets();
+          result = (await GetUntaggedAssets()) || [];
           break;
         case "favorites":
-          a = await GetFavoritedAssets();
+          result = (await GetFavoritedAssets()) || [];
           break;
         case "recent-added":
-          a = await GetRecentlyAddedAssets();
+          result = (await GetRecentlyAddedAssets()) || [];
           break;
         case "recent-used":
-          a = await GetRecentlyUsedAssets();
+          result = (await GetRecentlyUsedAssets()) || [];
           break;
         default:
-          a = await GetAssets();
+          result = (await GetAssets()) || [];
           break;
       }
-      displayedAssets.set(a || []);
-      if (view === "all") assets.set(a || []);
+      if (view === "all") assets.set(result);
     }
+
+    // Apply folder filter on top
+    if (folderPath) {
+      result = result.filter(
+        (a) =>
+          a.absolute_path.startsWith(folderPath + "/") ||
+          a.absolute_path === folderPath,
+      );
+    }
+
+    // Apply exclude-tag filter on top
+    const exTags = get(excludeTags);
+    if (exTags.length > 0) {
+      const excludedIds = (await GetAssetIDsByTags(exTags)) || [];
+      const excludeSet = new Set(excludedIds);
+      result = result.filter((a) => !excludeSet.has(a.id));
+    }
+
+    displayedAssets.set(result);
   } catch (e) {
     console.error("Filter failed:", e);
   }
@@ -228,6 +270,11 @@ export function toggleTagFilter(tag: string) {
   activeCollectionId.set(null);
   activeView.set("all");
   filterTag.set("");
+  // Remove from excludes if present
+  const excl = get(excludeTags);
+  if (excl.includes(tag)) {
+    excludeTags.set(excl.filter((t) => t !== tag));
+  }
   const current = get(filterTags);
   const idx = current.indexOf(tag);
   if (idx >= 0) {
@@ -240,9 +287,32 @@ export function toggleTagFilter(tag: string) {
 
 export function clearTagFilters() {
   filterTags.set([]);
+  excludeTags.set([]);
   filterTag.set("");
   activeCollectionId.set(null);
+  activeFolderPath.set(null);
   activeView.set("all");
+  applyFilter();
+}
+
+export function toggleExcludeTag(tag: string) {
+  // If the tag is currently included, remove it from includes first
+  const incl = get(filterTags);
+  if (incl.includes(tag)) {
+    filterTags.set(incl.filter((t) => t !== tag));
+  }
+  const current = get(excludeTags);
+  const idx = current.indexOf(tag);
+  if (idx >= 0) {
+    excludeTags.set(current.filter((t) => t !== tag));
+  } else {
+    excludeTags.set([...current, tag]);
+  }
+  applyFilter();
+}
+
+export function clearExcludeTags() {
+  excludeTags.set([]);
   applyFilter();
 }
 
@@ -258,6 +328,7 @@ export function setCollectionFilter(id: number | null) {
   filterTag.set("");
   filterTags.set([]);
   activeView.set("all");
+  activeFolderPath.set(null);
   activeCollectionId.update((current) => (current === id ? null : id));
   applyFilter();
 }
@@ -268,7 +339,25 @@ export function setActiveView(view: ViewId) {
   filterTag.set("");
   filterTags.set([]);
   activeCollectionId.set(null);
+  activeFolderPath.set(null);
   activeView.set(view);
+  applyFilter();
+}
+
+export function setFolderFilter(path: string) {
+  const current = get(activeFolderPath);
+  if (current === path) {
+    // clicking same folder clears it
+    activeFolderPath.set(null);
+  } else {
+    activeFolderPath.set(path);
+  }
+  // Keep current view/tags — folder is an overlay filter
+  applyFilter();
+}
+
+export function clearFolderFilter() {
+  activeFolderPath.set(null);
   applyFilter();
 }
 
@@ -326,9 +415,14 @@ export function handleAssetClick(asset: Asset, index: number, e: MouseEvent) {
     // Also show detail panel for the clicked asset
     selectAsset(asset);
   } else {
-    // No selection active: just open detail panel
-    lastClickedIndex.set(index);
-    selectAsset(asset);
+    // No selection active: toggle detail panel (close if clicking same asset)
+    const current = get(selectedAsset);
+    if (current && current.id === asset.id && get(detailPanelOpen)) {
+      closeDetailPanel();
+    } else {
+      lastClickedIndex.set(index);
+      selectAsset(asset);
+    }
   }
 }
 
@@ -374,8 +468,9 @@ export async function bulkTag(tagInput: string) {
       const tags = await GetTagsForAsset(sa.id);
       selectedAssetTags.set(tags || []);
     }
-  } catch (e) {
-    showToast("Failed to bulk tag");
+  } catch (e: any) {
+    console.error("bulkTag error:", e);
+    showToast("Failed to bulk tag: " + (e?.message || e));
   }
 }
 
@@ -425,10 +520,48 @@ export async function bulkSetFavorite(favorited: boolean) {
   if (ids.size === 0) return;
   try {
     await BulkSetFavorite([...ids], favorited);
-    showToast(favorited ? `Favorited ${ids.size} assets` : `Unfavorited ${ids.size} assets`);
+    showToast(
+      favorited
+        ? `Favorited ${ids.size} assets`
+        : `Unfavorited ${ids.size} assets`,
+    );
     await applyFilter();
   } catch (e) {
     showToast("Failed to update favorites");
+  }
+}
+
+// --- Delete ---
+
+export async function deleteSelectedAsset() {
+  const sa = get(selectedAsset);
+  if (!sa) return;
+  try {
+    await DeleteAsset(sa.id);
+    selectedAsset.set(null);
+    detailPanelOpen.set(false);
+    selectedAssetTags.set([]);
+    selectedAssetCollections.set([]);
+    showToast(`Deleted "${sa.filename}"`);
+    await applyFilter();
+  } catch (e) {
+    showToast("Failed to delete asset");
+  }
+}
+
+export async function bulkDeleteAssets() {
+  const ids = get(selectedAssetIds);
+  if (ids.size === 0) return;
+  try {
+    const count = await BulkDeleteAssets([...ids]);
+    selectedAssetIds.set(new Set());
+    showBulkActions.set(false);
+    selectedAsset.set(null);
+    detailPanelOpen.set(false);
+    showToast(`Deleted ${count} assets`);
+    await applyFilter();
+  } catch (e) {
+    showToast("Failed to delete assets");
   }
 }
 
@@ -437,7 +570,7 @@ export async function bulkSetFavorite(favorited: boolean) {
 export async function hoverAddToCollection(
   assetId: number,
   collectionId: number,
-  e: MouseEvent
+  e: MouseEvent,
 ) {
   e.stopPropagation();
   try {
@@ -489,6 +622,7 @@ export async function removeFolder(id: number) {
 
 export async function selectAsset(asset: Asset) {
   selectedAsset.set(asset);
+  detailPanelOpen.set(true);
   try {
     const [tags, cols] = await Promise.all([
       GetTagsForAsset(asset.id),
@@ -500,6 +634,13 @@ export async function selectAsset(asset: Asset) {
     selectedAssetTags.set([]);
     selectedAssetCollections.set([]);
   }
+}
+
+export function closeDetailPanel() {
+  detailPanelOpen.set(false);
+  selectedAsset.set(null);
+  selectedAssetTags.set([]);
+  selectedAssetCollections.set([]);
 }
 
 export async function copyPath() {
@@ -544,8 +685,9 @@ export async function addTag(tagName: string) {
     const [t, tc] = await Promise.all([GetAllTags(), GetTagsWithCounts()]);
     allTags.set(t || []);
     tagsWithCounts.set(tc || []);
-  } catch (e) {
-    showToast("Failed to add tag");
+  } catch (e: any) {
+    console.error("addTag error:", e, "asset:", sa.id, "tag:", tagName);
+    showToast("Failed to add tag: " + (e?.message || e));
   }
 }
 
@@ -581,14 +723,36 @@ export async function toggleFavorite(assetId: number) {
 // --- Collections ---
 
 export const SHELF_ICONS = [
-  "📁", "📺", "🎮", "⭐", "🗑️", "🔧",
-  "🎨", "🏠", "🚗", "🌿", "💀", "🍣",
+  "📁",
+  "📺",
+  "🎮",
+  "⭐",
+  "🗑️",
+  "🔧",
+  "🎨",
+  "🏠",
+  "🚗",
+  "🌿",
+  "💀",
+  "🍣",
 ];
 
 export const SUGGESTED_TAGS = [
-  "lowpoly", "psx", "vehicle", "clutter", "environment",
-  "character", "animated", "prop", "weapon", "building",
-  "nature", "furniture", "sci-fi", "fantasy", "modular",
+  "lowpoly",
+  "psx",
+  "vehicle",
+  "clutter",
+  "environment",
+  "character",
+  "animated",
+  "prop",
+  "weapon",
+  "building",
+  "nature",
+  "furniture",
+  "sci-fi",
+  "fantasy",
+  "modular",
 ];
 
 export async function createCollection(name: string, icon: string) {
@@ -669,19 +833,41 @@ export function viewLabel(): string {
   const fTags = get(filterTags);
   const fTag = get(filterTag);
   const view = get(activeView);
+  const folderPath = get(activeFolderPath);
+
+  let label = "";
 
   if (colId !== null) {
     const col = cols.find((c) => c.id === colId);
-    return col ? `${col.icon} ${col.name}` : "Collection";
+    label = col ? `${col.icon} ${col.name}` : "Collection";
+  } else if (fTags.length > 0) {
+    label = fTags.map((t) => `#${t}`).join(" + ");
+  } else if (fTag) {
+    label = `#${fTag}`;
+  } else {
+    switch (view) {
+      case "untagged":
+        label = "🏷️ Untagged";
+        break;
+      case "favorites":
+        label = "⭐ Favorites";
+        break;
+      case "recent-added":
+        label = "🆕 Recently Added";
+        break;
+      case "recent-used":
+        label = "🕐 Recently Used";
+        break;
+      default:
+        label = "All assets";
+        break;
+    }
   }
-  if (fTags.length > 0) return fTags.map((t) => `#${t}`).join(" + ");
-  if (fTag) return `#${fTag}`;
 
-  switch (view) {
-    case "untagged": return "🏷️ Untagged";
-    case "favorites": return "⭐ Favorites";
-    case "recent-added": return "🆕 Recently Added";
-    case "recent-used": return "🕐 Recently Used";
-    default: return "All assets";
+  if (folderPath) {
+    const folderName = folderPath.split("/").pop() || folderPath;
+    label += ` › 📂 ${folderName}`;
   }
+
+  return label;
 }

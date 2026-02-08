@@ -10,15 +10,23 @@ export function AddWatchFolder():Promise<Array<main.Asset>>;
 
 export function BulkAddToCollection(arg1:number,arg2:Array<number>):Promise<void>;
 
+export function BulkDeleteAssets(arg1:Array<number>):Promise<number>;
+
 export function BulkSetFavorite(arg1:Array<number>,arg2:boolean):Promise<void>;
 
 export function BulkTagAssets(arg1:Array<number>,arg2:string):Promise<void>;
 
+export function ClearAllThumbnails():Promise<number>;
+
 export function CreateCollection(arg1:string,arg2:string):Promise<main.Collection>;
+
+export function DeleteAsset(arg1:number):Promise<void>;
 
 export function DeleteCollection(arg1:number):Promise<void>;
 
 export function GetAllTags():Promise<Array<main.Tag>>;
+
+export function GetAssetIDsByTags(arg1:Array<string>):Promise<Array<number>>;
 
 export function GetAssets():Promise<Array<main.Asset>>;
 

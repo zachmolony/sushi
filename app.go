@@ -155,6 +155,11 @@ func (a *App) GetUntaggedAssets() ([]Asset, error) {
 	return assets, nil
 }
 
+// GetAssetIDsByTags returns IDs of assets that have any of the given tags.
+func (a *App) GetAssetIDsByTags(tagNames []string) ([]int64, error) {
+	return a.db.GetAssetIDsByTags(tagNames)
+}
+
 // GetFavoritedAssets returns all favorited assets.
 func (a *App) GetFavoritedAssets() ([]Asset, error) {
 	assets, err := a.db.GetFavoritedAssets()
@@ -175,6 +180,16 @@ func (a *App) ToggleFavorite(assetID int64) (bool, error) {
 // BulkSetFavorite sets favorite status for multiple assets.
 func (a *App) BulkSetFavorite(assetIDs []int64, favorited bool) error {
 	return a.db.BulkSetFavorite(assetIDs, favorited)
+}
+
+// DeleteAsset deletes a single asset from the database (not from disk).
+func (a *App) DeleteAsset(assetID int64) error {
+	return a.db.DeleteAssetByID(assetID)
+}
+
+// BulkDeleteAssets deletes multiple assets from the database. Returns the count removed.
+func (a *App) BulkDeleteAssets(assetIDs []int64) (int, error) {
+	return a.db.DeleteAssetsByIDs(assetIDs)
 }
 
 // MarkAssetUsed marks an asset as recently used.
@@ -269,6 +284,11 @@ func (a *App) SavePolyCount(assetID int64, count int64) error {
 // GetThumbnail returns the base64 PNG data for an asset's thumbnail.
 func (a *App) GetThumbnail(assetID int64) (string, error) {
 	return a.db.GetThumbnail(assetID)
+}
+
+// ClearAllThumbnails wipes all cached thumbnails so they regenerate on next load.
+func (a *App) ClearAllThumbnails() (int64, error) {
+	return a.db.ClearAllThumbnails()
 }
 
 // --- Utility Methods ---

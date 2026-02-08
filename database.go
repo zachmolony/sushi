@@ -59,6 +59,8 @@ func NewDatabase() (*Database, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
+	// SQLite only supports one writer — limit pool to avoid SQLITE_BUSY errors
+	db.SetMaxOpenConns(1)
 
 	d := &Database{db: db}
 	if err := d.migrate(); err != nil {
@@ -130,6 +132,16 @@ func (d *Database) migrate() error {
 	d.db.Exec("ALTER TABLE assets ADD COLUMN poly_count INTEGER NOT NULL DEFAULT 0")
 
 	return nil
+}
+
+// ClearAllThumbnails resets thumbnail and poly_count for all assets so they regenerate.
+func (d *Database) ClearAllThumbnails() (int64, error) {
+	res, err := d.db.Exec("UPDATE assets SET thumbnail = '', poly_count = 0")
+	if err != nil {
+		return 0, err
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
 }
 
 // --- Watch Folders ---
@@ -222,6 +234,32 @@ func (d *Database) ListAssets() ([]Asset, error) {
 func (d *Database) DeleteAssetByPath(absolutePath string) error {
 	_, err := d.db.Exec("DELETE FROM assets WHERE absolute_path = ?", absolutePath)
 	return err
+}
+
+func (d *Database) DeleteAssetByID(id int64) error {
+	_, err := d.db.Exec("DELETE FROM assets WHERE id = ?", id)
+	return err
+}
+
+func (d *Database) DeleteAssetsByIDs(ids []int64) (int, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	tx, err := d.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, id := range ids {
+		res, err := tx.Exec("DELETE FROM assets WHERE id = ?", id)
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+		affected, _ := res.RowsAffected()
+		count += int(affected)
+	}
+	return count, tx.Commit()
 }
 
 func (d *Database) DeleteAssetsByFolder(folderID int64) error {
@@ -375,19 +413,15 @@ func (d *Database) GetRecentlyAddedAssets(limit int) ([]Asset, error) {
 // --- Tags ---
 
 func (d *Database) CreateTag(name string) (*Tag, error) {
-	res, err := d.db.Exec("INSERT OR IGNORE INTO tags (name) VALUES (?)", name)
+	_, err := d.db.Exec("INSERT OR IGNORE INTO tags (name) VALUES (?)", name)
 	if err != nil {
 		return nil, err
 	}
-	id, _ := res.LastInsertId()
-	if id == 0 {
-		// Already existed
-		row := d.db.QueryRow("SELECT id, name FROM tags WHERE name = ?", name)
-		t := &Tag{}
-		err = row.Scan(&t.ID, &t.Name)
-		return t, err
-	}
-	return &Tag{ID: id, Name: name}, nil
+	// Always look up by name to get the correct ID
+	row := d.db.QueryRow("SELECT id, name FROM tags WHERE name = ?", name)
+	t := &Tag{}
+	err = row.Scan(&t.ID, &t.Name)
+	return t, err
 }
 
 func (d *Database) ListTags() ([]Tag, error) {
@@ -563,6 +597,45 @@ func (d *Database) GetAssetsByTags(tagNames []string) ([]Asset, error) {
 		assets = append(assets, a)
 	}
 	return assets, nil
+}
+
+// GetAssetIDsByTags returns IDs of assets that have ANY of the given tags.
+func (d *Database) GetAssetIDsByTags(tagNames []string) ([]int64, error) {
+	if len(tagNames) == 0 {
+		return nil, nil
+	}
+	placeholders := ""
+	args := make([]interface{}, len(tagNames))
+	for i, name := range tagNames {
+		if i > 0 {
+			placeholders += ","
+		}
+		placeholders += "?"
+		args[i] = name
+	}
+	query := fmt.Sprintf(`
+		SELECT DISTINCT a.id
+		FROM assets a
+		JOIN asset_tags at ON at.asset_id = a.id
+		JOIN tags t ON t.id = at.tag_id
+		WHERE t.name IN (%s)
+	`, placeholders)
+
+	rows, err := d.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 
 // --- Collections ---

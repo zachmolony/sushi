@@ -18,7 +18,9 @@ function checkWebGL(): boolean {
     webglAvailable = !!gl;
     if (gl) {
       // Clean up test context
-      const ext = (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context");
+      const ext = (gl as WebGLRenderingContext).getExtension(
+        "WEBGL_lose_context",
+      );
       if (ext) ext.loseContext();
     }
     console.log("[sushi] WebGL available:", webglAvailable);
@@ -91,7 +93,9 @@ export interface ThumbnailResult {
  * Expects a URL like "/localfile/?path=..." served by the Go backend.
  * Returns null if WebGL is unavailable.
  */
-export async function renderThumbnail(url: string): Promise<ThumbnailResult | null> {
+export async function renderThumbnail(
+  url: string,
+): Promise<ThumbnailResult | null> {
   if (!ensureRenderer()) {
     console.warn("[sushi] Skipping thumbnail — no WebGL");
     return null;

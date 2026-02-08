@@ -17,9 +17,12 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "sushi",
-		Width:  1920,
-		Height: 800,
+		Title:            "sushi",
+		Width:            3840,
+		Height:           2160,
+		MinWidth:         960,
+		MinHeight:        600,
+		WindowStartState: options.Maximised,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -35,6 +38,3 @@ func main() {
 		println("Error:", err.Error())
 	}
 }
-
-
-// would be nice if i could delete files. and rename stuff, at least in the app, not necessarily the file, also open in folder button. also collections should be called rtrays, like sushi trays. and poly count would be cool. and a way to browse collections easier, and select multiple assets to add tags or trays. suggested tags too. also we sould refactor before adding stuff and break up these massive files into smaller ones.

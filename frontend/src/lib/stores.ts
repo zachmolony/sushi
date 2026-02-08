@@ -1,5 +1,11 @@
 import { writable, derived } from "svelte/store";
-import type { Asset, WatchFolder, Tag, TagWithCount, Collection } from "./types";
+import type {
+  Asset,
+  WatchFolder,
+  Tag,
+  TagWithCount,
+  Collection,
+} from "./types";
 
 // --- Core data ---
 export const assets = writable<Asset[]>([]);
@@ -13,14 +19,28 @@ export const loading = writable(true);
 export const searchQuery = writable("");
 export const filterTag = writable("");
 export const filterTags = writable<string[]>([]);
+export const excludeTags = writable<string[]>([]);
 export const activeCollectionId = writable<number | null>(null);
 
 // --- Views ---
-export type ViewId = "all" | "untagged" | "recent-added" | "recent-used" | "favorites";
+export type ViewId =
+  | "all"
+  | "untagged"
+  | "recent-added"
+  | "recent-used"
+  | "favorites";
 export const activeView = writable<ViewId>("all");
 
+// --- Folder browser ---
+export const activeFolderPath = writable<string | null>(null);
+
 // --- Sorting ---
-export type SortField = "name" | "date-added" | "file-modified" | "file-size" | "poly-count";
+export type SortField =
+  | "name"
+  | "date-added"
+  | "file-modified"
+  | "file-size"
+  | "poly-count";
 export type SortDirection = "asc" | "desc";
 export const sortField = writable<SortField>("name");
 export const sortDirection = writable<SortDirection>("asc");
@@ -32,6 +52,7 @@ export const selectedAssetCollections = writable<Collection[]>([]);
 export const selectedAssetIds = writable<Set<number>>(new Set());
 export const lastClickedIndex = writable<number>(-1);
 export const showBulkActions = writable(false);
+export const detailPanelOpen = writable(false);
 
 // --- Thumbnails ---
 export const thumbnailCache = writable<Record<number, string>>({});
@@ -69,9 +90,17 @@ export const filteredAssets = derived(
         case "name":
           return dir * a.filename.localeCompare(b.filename);
         case "date-added":
-          return dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          return (
+            dir *
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime())
+          );
         case "file-modified":
-          return dir * (new Date(a.modified_at).getTime() - new Date(b.modified_at).getTime());
+          return (
+            dir *
+            (new Date(a.modified_at).getTime() -
+              new Date(b.modified_at).getTime())
+          );
         case "file-size":
           return dir * (a.file_size - b.file_size);
         case "poly-count":
@@ -82,5 +111,5 @@ export const filteredAssets = derived(
     });
 
     return result;
-  }
+  },
 );
