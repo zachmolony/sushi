@@ -205,7 +205,7 @@
         {/each}
         {#if $collections.filter((c) => !$selectedAssetCollections.find((sc) => sc.id === c.id)).length > 0}
           <select
-            class="bg-white/[0.06] border border-surface-border rounded-full text-white/50 text-[0.7rem] px-2 py-0.5 outline-none font-inherit cursor-pointer"
+            class="appearance-none bg-white/[0.06] border border-surface-border rounded-full text-white/50 text-[0.7rem] px-2 py-0.5 outline-none font-inherit cursor-pointer"
             on:change={(e) => {
               const val = parseInt(e.currentTarget.value);
               if (val) addSelectedToCollection(val);
@@ -236,7 +236,7 @@
         on:click={copyPath}>📋 Copy Path</button
       >
       <button
-        class="px-3 py-2 rounded-md text-sm bg-surface border border-surface-border text-white text-left cursor-pointer font-inherit hover:bg-surface-hover transition-colors opacity-60"
+        class="px-3 py-2 rounded-md text-sm bg-surface border border-surface-border text-white text-left cursor-pointer font-inherit hover:bg-surface-hover transition-colors"
         on:click={showInFolder}>📂 Show in Folder</button
       >
       {#if !confirmDelete}

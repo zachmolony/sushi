@@ -182,14 +182,41 @@ func (a *App) BulkSetFavorite(assetIDs []int64, favorited bool) error {
 	return a.db.BulkSetFavorite(assetIDs, favorited)
 }
 
-// DeleteAsset deletes a single asset from the database (not from disk).
+// DeleteAsset deletes a single asset from disk and from the database.
 func (a *App) DeleteAsset(assetID int64) error {
-	return a.db.DeleteAssetByID(assetID)
+	// Look up the asset path before deleting from DB
+	asset, err := a.db.GetAssetByID(assetID)
+	if err != nil {
+		return fmt.Errorf("could not find asset: %w", err)
+	}
+	// Delete from database first
+	if err := a.db.DeleteAssetByID(assetID); err != nil {
+		return err
+	}
+	// Delete the file from disk (best-effort — don't fail if already gone)
+	os.Remove(asset.AbsolutePath)
+	return nil
 }
 
-// BulkDeleteAssets deletes multiple assets from the database. Returns the count removed.
+// BulkDeleteAssets deletes multiple assets from disk and from the database. Returns the count removed.
 func (a *App) BulkDeleteAssets(assetIDs []int64) (int, error) {
-	return a.db.DeleteAssetsByIDs(assetIDs)
+	// Collect paths before deleting from DB
+	var paths []string
+	for _, id := range assetIDs {
+		asset, err := a.db.GetAssetByID(id)
+		if err == nil {
+			paths = append(paths, asset.AbsolutePath)
+		}
+	}
+	count, err := a.db.DeleteAssetsByIDs(assetIDs)
+	if err != nil {
+		return 0, err
+	}
+	// Delete files from disk (best-effort)
+	for _, p := range paths {
+		os.Remove(p)
+	}
+	return count, nil
 }
 
 // MarkAssetUsed marks an asset as recently used.

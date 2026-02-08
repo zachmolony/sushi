@@ -236,6 +236,22 @@ func (d *Database) DeleteAssetByPath(absolutePath string) error {
 	return err
 }
 
+func (d *Database) GetAssetByID(id int64) (*Asset, error) {
+	row := d.db.QueryRow(`
+		SELECT id, absolute_path, filename, folder_id, file_size, modified_at,
+		       thumbnail, favorited, last_used_at, poly_count, created_at, updated_at
+		FROM assets WHERE id = ?
+	`, id)
+	a := &Asset{}
+	err := row.Scan(&a.ID, &a.AbsolutePath, &a.Filename, &a.FolderID, &a.FileSize,
+		&a.ModifiedAt, &a.Thumbnail, &a.Favorited, &a.LastUsedAt, &a.PolyCount,
+		&a.CreatedAt, &a.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
 func (d *Database) DeleteAssetByID(id int64) error {
 	_, err := d.db.Exec("DELETE FROM assets WHERE id = ?", id)
 	return err
