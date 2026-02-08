@@ -19,6 +19,7 @@
     removeSelectedFromCollection,
     toggleFavorite,
     formatSize,
+    formatPoly,
     SUGGESTED_TAGS,
     closeDetailPanel,
     deleteSelectedAsset,
@@ -27,12 +28,6 @@
   let newTagInput = "";
   let showTagSuggestions = false;
   let confirmDelete = false;
-
-  function formatPoly(count: number): string {
-    if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + "M";
-    if (count >= 1_000) return (count / 1_000).toFixed(1) + "K";
-    return count.toString();
-  }
 
   // Suggestions: existing tags not already on the asset, then prebuilt
   $: assetTagNames = $selectedAssetTags.map((t) => t.name);

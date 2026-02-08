@@ -827,6 +827,12 @@ export function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+export function formatPoly(count: number): string {
+  if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + "M";
+  if (count >= 1_000) return (count / 1_000).toFixed(1) + "K";
+  return count.toString();
+}
+
 export function viewLabel(): string {
   const colId = get(activeCollectionId);
   const cols = get(collections);
